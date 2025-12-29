@@ -1,53 +1,47 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Mail, Lock, Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react';
-import api from '../services/api'; // Importamos tu configuración de axios
+import { useNavigate } from 'react-router-dom'; // Para redireccionar
+import { useAuth } from '../context/AuthContext'; // Importamos el hook del contexto
+import api from '../services/api';
 
 export default function Login() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); // Estado para visibilidad del password
+  const [showPassword, setShowPassword] = useState(false);
 
-  // Hook para manejar el formulario y validaciones
+  // Hooks
   const { register, handleSubmit, formState: { errors } } = useForm();
-
-  // Hook para navegar a otras páginas (cuando configuremos rutas)
-  // const navigate = useNavigate(); 
+  const navigate = useNavigate(); // Hook de navegación
+  const { login } = useAuth(); // Hook de autenticación (Contexto)
 
   const onSubmit = async (data) => {
     setIsLoading(true);
     setError('');
 
     try {
-      // CORRECCIÓN: Usamos URLSearchParams para enviar el formato exacto 
-      // que pide OAuth2 (application/x-www-form-urlencoded)
       const params = new URLSearchParams();
-      params.append('username', data.email); // Mapeamos email -> username
+      params.append('username', data.email);
       params.append('password', data.password);
 
-      // Enviamos la petición sobrescribiendo el header Content-Type
       const response = await api.post('/auth/login', params, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
         }
       });
 
-      // Si llegamos aquí, ¡el login fue exitoso!
       const { access_token } = response.data;
 
-      localStorage.setItem('token', access_token);
+      // 1. Usamos la función login del contexto (actualiza estado global)
+      await login(access_token);
 
-      alert(`Login realizado com sucesso! Token salvo.`);
-      console.log("Token:", access_token);
-
-      // navigate('/dashboard');
+      // 2. Redirigimos al Dashboard
+      alert(`Login realizado com sucesso!`);
+      navigate('/dashboard');
 
     } catch (err) {
       console.error(err);
       if (err.response && err.response.status === 400) {
-        // Mensaje específico del backend traducido visualmente si es genérico, 
-        // o usamos el que viene del server si preferimos.
-        // Aquí forzamos un mensaje en PT-BR si es error de credenciales común.
         setError(err.response.data.detail === "Credenciales incorrectas" ? "Credenciais inválidas" : err.response.data.detail);
       } else {
         setError("Erro de conexão ou dados inválidos (422)");
