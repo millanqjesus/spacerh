@@ -36,7 +36,7 @@ export default function Login() {
       await login(access_token);
 
       // 2. Redirigimos al Dashboard
-      alert(`Login realizado com sucesso!`);
+      // alert(`Login realizado com sucesso!`);
       navigate('/dashboard');
 
     } catch (err) {

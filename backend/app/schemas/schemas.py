@@ -1,8 +1,15 @@
 from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
 from datetime import datetime
+from enum import Enum
 import re
 
-# --- CLASE DE ENTRADA (Para crear usuario) ---
+# Definimos los roles permitidos para tener orden
+class UserRole(str, Enum):
+    ADMIN = "admin"
+    LIDER = "lider"
+    CONTRATADO = "contratado"
+
+# --- CLASE DE ENTRADA ---
 class UserCreate(BaseModel):
     first_name: str = Field(..., min_length=1, max_length=100)
     last_name: str = Field(..., min_length=1, max_length=100)
@@ -10,22 +17,25 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=6, description="Password robusto")
 
+    # Opcional: Podrías permitir crear admins directamente, 
+    # pero por seguridad lo dejamos fuera por ahora (default será user en DB)
+
     @field_validator('password')
     @classmethod
     def validate_password_strength(cls, v):
         if len(v) < 6:
-            raise ValueError('A senha deve ter pelo menos 6 caracteres')
+            raise ValueError('La contraseña debe tener al menos 6 caracteres')
         if not re.search(r'[A-Z]', v):
-            raise ValueError('Deve ter letra maiúscula')
+            raise ValueError('Debe tener mayúscula')
         if not re.search(r'[a-z]', v):
-            raise ValueError('Deve ter letra minúscula')
+            raise ValueError('Debe tener minúscula')
         if not re.search(r'\d', v):
-            raise ValueError('Deve ter número')
+            raise ValueError('Debe tener número')
         if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
-            raise ValueError('Deve ter caractere especial')
+            raise ValueError('Debe tener carácter especial')
         return v
 
-# --- CLASE DE SALIDA (Para responder al frontend) ---
+# --- CLASE DE SALIDA ---
 class UserResponse(BaseModel):
     id: int
     email: EmailStr
@@ -33,13 +43,11 @@ class UserResponse(BaseModel):
     last_name: str
     cpf: str
     is_active: bool
+    role: str
     created_at: datetime
-    # updated_at: datetime # Opcional si quieres devolverla también
-
-    # Configuración para leer desde SQLAlchemy
+    
     model_config = ConfigDict(from_attributes=True)
 
-# --- CLASE PARA EL TOKEN ---
 class Token(BaseModel):
     access_token: str
     token_type: str

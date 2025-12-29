@@ -5,53 +5,56 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  // 1. Nuevo estado para el token (vive solo en memoria RAM)
-  const [token, setToken] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // 1. Al cargar la página, intentamos recuperar la sesión
   useEffect(() => {
-    // Como ya no usamos localStorage, al cargar la página siempre empezamos "limpios".
-    // Si tuviéramos un sistema de Refresh Token con Cookies, aquí intentaríamos renovarlo.
-    setLoading(false);
+    const recoverSession = async () => {
+      const token = localStorage.getItem('token');
+
+      if (token) {
+        try {
+          // El interceptor de api.js ya inyectará el token aquí
+          const response = await api.get('/users/me');
+          setUser(response.data);
+          setIsAuthenticated(true);
+        } catch (error) {
+          console.error("No se pudo restaurar la sesión:", error);
+          localStorage.removeItem('token');
+          setIsAuthenticated(false);
+        }
+      }
+      setLoading(false);
+    };
+
+    recoverSession();
   }, []);
 
   const login = async (accessToken) => {
-    // 1. Guardamos el token en el estado de React
-    setToken(accessToken);
+    // 2. Guardamos en DISCO (localStorage) para que sobreviva al F5
+    localStorage.setItem('token', accessToken);
     setIsAuthenticated(true);
 
-    // 2. IMPORTANTE: Configuramos Axios para que use este token en el futuro
-    // Esto reemplaza al interceptor que leía de localStorage
-    api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-
     try {
-      // Cargamos los datos del usuario inmediatamente
       const response = await api.get('/users/me');
       setUser(response.data);
       return true;
     } catch (error) {
-      console.error("Error al obtener datos de usuario", error);
-      // Si falla, revertimos
       logout();
       return false;
     }
   };
 
   const logout = () => {
-    // Limpiamos la memoria
-    setToken(null);
+    localStorage.removeItem('token');
     setUser(null);
     setIsAuthenticated(false);
-
-    // Quitamos el token de las cabeceras de Axios
-    delete api.defaults.headers.common['Authorization'];
   };
 
   return (
     <AuthContext.Provider value={{
       user,
-      token, // Ahora exponemos el token directamente desde el contexto
       isAuthenticated,
       loading,
       login,

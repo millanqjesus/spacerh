@@ -1,29 +1,30 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext'; // Importamos el Proveedor
+import { AuthProvider } from './context/AuthContext';
 import Login from './pages/Login';
+import MainLayout from './layouts/MainLayout'; // Importamos el Layout
 
 function App() {
   return (
-    // Envolvemos la aplicación para que el contexto exista en todas partes
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Ruta pública: Login */}
+          {/* RUTA PÚBLICA (Sin Header/Footer) */}
           <Route path="/" element={<Login />} />
 
-          {/* Ruta de prueba para el Dashboard (luego haremos una página real) */}
-          <Route path="/dashboard" element={
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-              <div className="text-center">
-                <h1 className="text-4xl font-bold text-space-orange">Dashboard</h1>
-                <p className="mt-4 text-gray-600">
-                  Se você vê isso, o contexto está funcionando!
-                </p>
+          {/* RUTAS PROTEGIDAS (Con Layout) */}
+          <Route element={<MainLayout />}>
+            <Route path="/dashboard" element={
+              <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
+                <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+                <p className="mt-2 text-gray-600">Bem-vindo ao sistema SPACE.</p>
               </div>
-            </div>
-          } />
+            } />
 
-          {/* Cualquier ruta desconocida redirige al login */}
+            {/* Aquí puedes agregar más páginas protegidas en el futuro */}
+            <Route path="/users" element={<div>Gestão de Usuários (Em breve)</div>} />
+          </Route>
+
+          {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
