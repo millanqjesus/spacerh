@@ -17,6 +17,7 @@ class UserCreate(BaseModel):
     cpf: str = Field(..., min_length=11, max_length=14)
     email: EmailStr
     password: str = Field(..., min_length=6, description="Password robusto")
+    role: Optional[UserRole] = UserRole.CONTRATADO
 
     # Opcional: Podrías permitir crear admins directamente, 
     # pero por seguridad lo dejamos fuera por ahora (default será user en DB)

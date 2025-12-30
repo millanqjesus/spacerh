@@ -38,7 +38,8 @@ def create_user(db: Session, user: UserCreate):
         hashed_password=hashed_password,
         first_name=user.first_name,
         last_name=user.last_name,
-        cpf=user.cpf
+        cpf=user.cpf,
+        role=user.role.value if user.role else "contratado"
         # created_at, updated_at, is_active y id se llenan solos por la DB
     )
     
@@ -46,7 +47,7 @@ def create_user(db: Session, user: UserCreate):
     db.add(db_user)
     db.commit()
     db.refresh(db_user) # Recargar para obtener el ID generado y fechas
-    
+
     return db_user
 
 # --- NUEVA FUNCION: ACTUALIZAR ---
