@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
 from datetime import datetime
 from enum import Enum
+from typing import Optional
 import re
 
 # Definimos los roles permitidos para tener orden
@@ -34,6 +35,16 @@ class UserCreate(BaseModel):
         if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
             raise ValueError('Debe tener carácter especial')
         return v
+
+# --- CLASE DE ACTUALIZACIÓN (Update) ---
+class UserUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    cpf: Optional[str] = None
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None # Opcional: Solo si quiere cambiarla
+    role: Optional[UserRole] = None
+    is_active: Optional[bool] = None
 
 # --- CLASE DE SALIDA ---
 class UserResponse(BaseModel):

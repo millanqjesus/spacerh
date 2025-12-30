@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Login from './pages/Login';
 import MainLayout from './layouts/MainLayout'; // Importamos el Layout
+import Users from './pages/Users';
 
 function App() {
   return (
@@ -21,7 +22,7 @@ function App() {
             } />
 
             {/* Aquí puedes agregar más páginas protegidas en el futuro */}
-            <Route path="/users" element={<div>Gestão de Usuários (Em breve)</div>} />
+            <Route path="/users" element={<Users />} />
           </Route>
 
           {/* Fallback */}
