@@ -10,22 +10,28 @@ export default function UserModal({ isOpen, onClose, user, onSuccess }) {
 
   const { register, handleSubmit, reset, setValue, formState: { isSubmitting } } = useForm();
 
-  // Control de animación y carga de datos
   useEffect(() => {
     if (isOpen) {
       const timer = setTimeout(() => setIsVisible(true), 10);
       setShowPassword(false);
 
       if (user) {
-        // Modo Edición
+        // Modo Edición: Cargar datos existentes
         setValue('first_name', user.first_name);
         setValue('last_name', user.last_name);
         setValue('email', user.email);
         setValue('cpf', user.cpf);
         setValue('role', user.role);
       } else {
-        // Modo Creación
-        reset();
+        // Modo Creación: Establecer valores por defecto
+        reset({
+          role: 'contratado', // Valor por defecto seguro
+          first_name: '',
+          last_name: '',
+          email: '',
+          cpf: '',
+          password: ''
+        });
       }
       return () => clearTimeout(timer);
     } else {
@@ -65,6 +71,7 @@ export default function UserModal({ isOpen, onClose, user, onSuccess }) {
         });
       } else {
         // --- CREAR ---
+        // Aseguramos que se envíe el rol seleccionado o el default
         const formData = { ...data, password: data.password };
         await api.post('/auth/signup', formData);
 

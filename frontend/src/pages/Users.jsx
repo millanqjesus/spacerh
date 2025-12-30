@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import {
-  Plus, Pencil, Trash2, Loader2, Shield, ShieldAlert,
+  Plus, Pencil, Loader2, Shield, ShieldAlert,
   User as UserIcon, Search, ChevronLeft, ChevronRight,
   Filter, Key
 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import ChangePasswordModal from '../components/ChangePasswordModal';
-import UserModal from '../components/UserModal'; // Componente extraído
+import UserModal from '../components/UserModal';
 import { showDialog } from '../utils/alert';
 
 export default function Users() {
@@ -64,26 +64,7 @@ export default function Users() {
     }
   };
 
-  const handleDelete = async (id) => {
-    const result = await showDialog({
-      title: 'Tem certeza?',
-      text: 'Você deseja realmente excluir este usuário? Esta ação não pode ser desfeita.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sim, excluir',
-      cancelButtonText: 'Cancelar'
-    });
-
-    if (result.isConfirmed) {
-      try {
-        await api.delete(`/users/${id}`);
-        setUsers(users.filter(u => u.id !== id));
-        showDialog({ title: 'Excluído!', text: 'Usuário removido com sucesso.', icon: 'success' });
-      } catch (error) {
-        showDialog({ title: 'Erro', text: 'Erro ao excluir usuário.', icon: 'error' });
-      }
-    }
-  };
+  // Se eliminó la función handleDelete por solicitud del usuario
 
   // UI Helpers
   const openUserModal = (user = null) => {
@@ -112,17 +93,35 @@ export default function Users() {
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Gestão de Usuários</h1>
           <p className="text-gray-500 text-sm mt-1">Gerencie o acesso e permissões da equipe ({users.length} total)</p>
         </div>
-        <button onClick={() => openUserModal()} className="flex items-center justify-center gap-2 bg-space-orange text-white px-5 py-2.5 rounded-lg hover:bg-orange-600 transition-all shadow-sm font-medium text-sm">
-          <Plus size={18} /> Novo Usuário
+
+        <button
+          onClick={() => openUserModal()}
+          className="flex items-center justify-center gap-2 bg-space-orange text-white px-5 py-2.5 rounded-lg hover:bg-orange-600 transition-all shadow-sm hover:shadow-md font-medium text-sm"
+        >
+          <Plus size={18} />
+          Novo Usuário
         </button>
       </div>
 
       <div className="bg-white p-4 rounded-t-xl border-b border-gray-200 flex flex-col sm:flex-row gap-4 justify-between items-center shadow-sm">
         <div className="relative w-full sm:w-96">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Search className="h-5 w-5 text-gray-400" /></div>
-          <input type="text" className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-space-orange focus:border-space-orange outline-none transition duration-150" placeholder="Buscar por nome, e-mail ou CPF..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-space-orange focus:border-space-orange outline-none transition duration-150"
+            placeholder="Buscar por nome, e-mail ou CPF..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
-        <button className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"><Filter size={16} /> Filtros</button>
+        <div className="flex gap-2">
+          <button className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+            <Filter size={16} />
+            Filtros
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-b-xl shadow-sm border border-t-0 border-gray-200 overflow-hidden">
@@ -165,7 +164,10 @@ export default function Users() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.is_active ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.is_active
+                            ? 'bg-green-50 text-green-700 border border-green-200'
+                            : 'bg-red-50 text-red-700 border border-red-200'
+                          }`}>
                           <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${user.is_active ? 'bg-green-500' : 'bg-red-500'}`}></span>
                           {user.is_active ? 'Ativo' : 'Inativo'}
                         </span>
@@ -173,28 +175,72 @@ export default function Users() {
                       <td className="px-6 py-4 text-gray-500 text-sm font-mono">{user.cpf}</td>
                       <td className="px-6 py-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+
+                          {/* Toggle */}
                           {currentUser?.id !== user.id && (
-                            <button onClick={() => toggleStatus(user)} title={user.is_active ? "Desativar" : "Ativar"} className="p-2 rounded-lg text-gray-400 hover:bg-gray-100 transition-colors">
+                            <button
+                              onClick={() => toggleStatus(user)}
+                              title={user.is_active ? "Desativar" : "Ativar"}
+                              className={`p-2 rounded-lg transition-colors ${user.is_active
+                                  ? 'text-green-600 hover:bg-green-50'
+                                  : 'text-gray-400 hover:bg-gray-100'
+                                }`}
+                            >
                               <div className={`w-8 h-4 rounded-full p-0.5 transition-colors duration-300 ${user.is_active ? 'bg-green-500' : 'bg-gray-300'}`}>
                                 <div className={`bg-white w-3 h-3 rounded-full shadow-sm transform duration-300 ${user.is_active ? 'translate-x-4' : 'translate-x-0'}`}></div>
                               </div>
                             </button>
                           )}
-                          <button onClick={() => openPasswordModal(user)} className="p-2 text-amber-500 hover:bg-amber-50 rounded-lg transition-colors" title="Alterar Senha"><Key size={18} /></button>
-                          <button onClick={() => openUserModal(user)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="Editar"><Pencil size={18} /></button>
-                          <button onClick={() => handleDelete(user.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Excluir"><Trash2 size={18} /></button>
+
+                          {/* Botón Password */}
+                          <button
+                            onClick={() => openPasswordModal(user)}
+                            className="p-2 text-amber-500 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-colors"
+                            title="Alterar Senha"
+                          >
+                            <Key size={18} />
+                          </button>
+
+                          <button
+                            onClick={() => openUserModal(user)}
+                            className="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Editar"
+                          >
+                            <Pencil size={18} />
+                          </button>
+
+                          {/* Botón Eliminar REMOVIDO */}
                         </div>
                       </td>
                     </tr>
                   ))
                 ) : (
-                  <tr><td colSpan="5" className="px-6 py-12 text-center text-gray-500">Nenhum usuário encontrado</td></tr>
+                  <tr>
+                    <td colSpan="5" className="px-6 py-12 text-center text-gray-500">
+                      <div className="flex flex-col items-center justify-center">
+                        <Search className="h-10 w-10 text-gray-300 mb-3" />
+                        <p className="text-lg font-medium text-gray-900">Nenhum usuário encontrado</p>
+                        <p className="text-sm">Tente buscar com outros termos.</p>
+                      </div>
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
+
+            {/* Paginación Visual */}
             <div className="bg-white px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-              <span className="text-sm text-gray-700">Mostrando <span className="font-medium">1</span> a <span className="font-medium">{filteredUsers.length}</span> de <span className="font-medium">{users.length}</span> resultados</span>
-              <div className="flex gap-1"><button className="p-1 rounded hover:bg-gray-100 disabled:opacity-50" disabled><ChevronLeft size={20} className="text-gray-500" /></button><button className="p-1 rounded hover:bg-gray-100 disabled:opacity-50" disabled><ChevronRight size={20} className="text-gray-500" /></button></div>
+              <span className="text-sm text-gray-700">
+                Mostrando <span className="font-medium">1</span> a <span className="font-medium">{filteredUsers.length}</span> de <span className="font-medium">{users.length}</span> resultados
+              </span>
+              <div className="flex gap-1">
+                <button className="p-1 rounded hover:bg-gray-100 disabled:opacity-50" disabled>
+                  <ChevronLeft size={20} className="text-gray-500" />
+                </button>
+                <button className="p-1 rounded hover:bg-gray-100 disabled:opacity-50" disabled>
+                  <ChevronRight size={20} className="text-gray-500" />
+                </button>
+              </div>
             </div>
           </div>
         )}
