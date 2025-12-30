@@ -1,9 +1,36 @@
-import { LogOut, User, Menu } from 'lucide-react';
+import { LogOut, Menu, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+
+// 1. Configuración del Menú (RBAC)
+// Aquí defines quién puede ver qué.
+const MENU_ITEMS = [
+  {
+    label: 'Dashboard',
+    path: '/dashboard',
+    allowedRoles: ['admin', 'lider', 'contratado'] // Todos
+  },
+  {
+    label: 'Usuários',
+    path: '/users',
+    allowedRoles: ['admin'] // Solo Admin
+  },
+  {
+    label: 'Configurações',
+    path: '/settings',
+    allowedRoles: ['admin', 'lider'] // Admin y Líder
+  }
+];
 
 export default function Header() {
   const { user, logout } = useAuth();
+  const location = useLocation(); // Para saber en qué ruta estamos
+
+  // 2. Filtramos las opciones antes de renderizar
+  // Si no hay usuario, mostramos lista vacía por seguridad
+  const visibleMenuItems = MENU_ITEMS.filter(item =>
+    user?.role && item.allowedRoles.includes(user.role)
+  );
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
@@ -19,11 +46,23 @@ export default function Header() {
             />
           </Link>
 
-          {/* Navegación Desktop */}
+          {/* Navegación Desktop Dinámica */}
           <nav className="hidden md:flex gap-6 text-sm font-medium text-gray-600">
-            <Link to="/dashboard" className="hover:text-space-orange transition-colors">Dashboard</Link>
-            <Link to="/users" className="hover:text-space-orange transition-colors">Usuários</Link>
-            <Link to="/settings" className="hover:text-space-orange transition-colors">Configurações</Link>
+            {visibleMenuItems.map((item) => {
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`transition-colors duration-200 ${isActive
+                      ? 'text-space-orange font-bold' // Estilo activo
+                      : 'hover:text-space-orange'     // Estilo normal
+                    }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
           </nav>
         </div>
 
@@ -33,8 +72,13 @@ export default function Header() {
             <span className="text-sm font-semibold text-gray-800">
               {user?.first_name} {user?.last_name}
             </span>
-            <span className="text-xs text-gray-500 capitalize">{user?.role || 'Usuário'}</span>
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-green-500"></span>
+              <span className="text-xs text-gray-500 capitalize">{user?.role || 'Usuário'}</span>
+            </div>
           </div>
+
+          <div className="h-8 w-px bg-gray-200 mx-1 hidden md:block"></div>
 
           <button
             onClick={logout}
@@ -44,7 +88,7 @@ export default function Header() {
             <LogOut size={20} />
           </button>
 
-          {/* Botón Menú Móvil (Solo visible en pantallas chicas) */}
+          {/* Botón Menú Móvil */}
           <button className="md:hidden p-2 text-gray-600">
             <Menu size={24} />
           </button>
