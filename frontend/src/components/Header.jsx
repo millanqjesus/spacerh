@@ -15,12 +15,17 @@ const MENU_ITEMS = [
     allowedRoles: ['admin']
   },
   {
+    label: 'Empresas',
+    path: '/companies',
+    allowedRoles: ['admin']
+  },
+  {
     label: 'Configurações',
     path: '/settings',
     allowedRoles: ['admin', 'lider']
   },
   {
-    label: 'Meu Perfil', // Nueva opción en el menú principal
+    label: 'Meu Perfil',
     path: '/profile',
     allowedRoles: ['admin', 'lider', 'contratado']
   }
@@ -71,8 +76,8 @@ export default function Header() {
                   key={item.path}
                   to={item.path}
                   className={`transition-colors duration-200 ${isActive
-                      ? 'text-space-orange font-bold'
-                      : 'hover:text-space-orange'
+                    ? 'text-space-orange font-bold'
+                    : 'hover:text-space-orange'
                     }`}
                 >
                   {item.label}

@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import MainLayout from './layouts/MainLayout'; // Importamos el Layout
 import Users from './pages/Users';
 import Profile from './pages/Profile';
+import Companies from './pages/Companies';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
             {/* Aquí puedes agregar más páginas protegidas en el futuro */}
             <Route path="/users" element={<Users />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/companies" element={<Companies />} />
           </Route>
 
           {/* Fallback */}
