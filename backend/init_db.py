@@ -1,20 +1,38 @@
-from app.db.database import engine, Base
-import app.models.models # Importamos para que SQLAlchemy reconozca el modelo User
+import sys
+import os
+from sqlalchemy import text
 
-def init_db():
-    print("🔄 Intentando conectar a Docker y crear tablas...")
+# Configuración de rutas
+sys.path.append(os.getcwd())
+
+from app.db.database import engine, Base
+from app.models import models 
+
+def reset_db():
+    print("🔄 Conectando a PostgreSQL...")
+    
     try:
-        print("🗑️  Borrando tablas existentes en 'auth'...")
-        Base.metadata.drop_all(bind=engine)
-        print("   -> Tablas borradas.")
-        # Esto crea las tablas definidas en models.py si no existen
+        with engine.connect() as connection:
+            # 1. Crear esquema de Autenticación
+            connection.execute(text("CREATE SCHEMA IF NOT EXISTS auth"))
+            
+            # 2. Crear esquema de Negocio (NUEVO)
+            connection.execute(text("CREATE SCHEMA IF NOT EXISTS business"))
+            
+            connection.commit()
+            print("✅ Esquemas 'auth' y 'business' verificados.")
+
+        # 3. BORRAR TABLAS (Opcional, solo para desarrollo/reset)
+        # print("🗑️  Borrando tablas existentes...")
+        # Base.metadata.drop_all(bind=engine)
+
+        # 4. CREAR TABLAS
+        print("🏗️  Creando/Actualizando tablas...")
         Base.metadata.create_all(bind=engine)
-        print("✅ ¡ÉXITO! Tablas creadas en PostgreSQL.")
-        print("   Tu backend ya tiene memoria permanente.")
+        print("✅ ¡ÉXITO! Base de datos lista.")
+        
     except Exception as e:
-        print("❌ ERROR DE CONEXIÓN:")
-        print(f"   {e}")
-        print("\n   👉 Pista: Revisa usuario, password y puerto en database.py")
+        print(f"❌ ERROR: {e}")
 
 if __name__ == "__main__":
-    init_db()
+    reset_db()

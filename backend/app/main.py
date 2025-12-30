@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import auth, users # Importamos nuestros nuevos módulos
+from app.routers import auth, users, companies
 
 app = FastAPI(title="Backend Profesional")
 
@@ -22,6 +22,7 @@ app.add_middleware(
 # Incluimos los routers
 app.include_router(auth.router)
 app.include_router(users.router)
+app.include_router(companies.router)
 
 @app.get("/")
 def read_root():
