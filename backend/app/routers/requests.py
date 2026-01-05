@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.dependencies import get_current_user
 from app.schemas.schemas import UserResponse
-from app.schemas.request_schemas import DailyRequestCreate, DailyRequestResponse, ShiftAssignmentCreate, ShiftAssignmentResponse, DailyRequestUpdate
+from app.schemas.request_schemas import DailyRequestCreate, DailyRequestResponse, ShiftAssignmentCreate, ShiftAssignmentResponse, DailyRequestUpdate, ShiftAssignmentUpdate
 from app.db import requests_crud
 
 router = APIRouter(prefix="/daily-requests", tags=["Solicitudes Diarias"])
@@ -53,6 +53,24 @@ def remove_assignment(
     if not success:
         raise HTTPException(status_code=404, detail="Asignación no encontrada")
     return None
+
+@router.put("/assignments/{assignment_id}/status", response_model=ShiftAssignmentResponse)
+def update_assignment_status(
+    assignment_id: int,
+    update_data: ShiftAssignmentUpdate,
+    db: Session = Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Actualiza el estado de una asignación (ej: PRESENTE, FALTÓ)"""
+    updated_assignment = requests_crud.update_assignment_status(
+        db=db,
+        assignment_id=assignment_id,
+        status=update_data.status,
+        user_id=current_user.id
+    )
+    if not updated_assignment:
+        raise HTTPException(status_code=404, detail="Asignación no encontrada")
+    return updated_assignment
 
 @router.put("/{request_id}/status", response_model=DailyRequestResponse)
 def update_request_status(

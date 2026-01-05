@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calendar, Building, Clock, DollarSign, Users, Trash2 } from 'lucide-react';
+import { ArrowLeft, Calendar, Building, Clock, DollarSign, Users, Trash2, CheckCircle } from 'lucide-react';
 import api from '../services/api';
 import { showDialog } from '../utils/alert';
 import EmployeeSelectionModal from '../components/EmployeeSelectionModal';
@@ -61,6 +61,32 @@ export default function RequestDetails() {
       } catch (error) {
         showDialog({ title: 'Erro', text: 'Erro ao remover colaborador.', icon: 'error' });
       }
+    }
+  };
+
+  const handleToggleAttendance = async (assignment) => {
+    const newStatus = assignment.status === 'PRESENTE' ? 'ASIGNADO' : 'PRESENTE';
+
+    try {
+      await api.put(`/daily-requests/assignments/${assignment.id}/status`, { status: newStatus });
+      // Actualizamos localmente
+      const updatedShifts = request.shifts.map(shift => {
+        if (shift.id === assignment.shift_id) {
+          return {
+            ...shift,
+            assignments: shift.assignments.map(a =>
+              a.id === assignment.id ? { ...a, status: newStatus } : a
+            )
+          };
+        }
+        return shift;
+      });
+
+      setRequest({ ...request, shifts: updatedShifts });
+
+    } catch (error) {
+      console.error(error);
+      showDialog({ title: 'Erro', text: 'Erro ao atualizar presença.', icon: 'error' });
     }
   };
 
@@ -172,13 +198,26 @@ export default function RequestDetails() {
                                 <p className="text-[10px] text-gray-500 uppercase tracking-wide">{assign.status}</p>
                               </div>
                             </div>
-                            <button
-                              onClick={() => handleRemoveAssignment(assign.id)}
-                              className="text-gray-300 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                              title="Remover"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => handleToggleAttendance(assign)}
+                                className={`p-1.5 rounded-full transition-colors ${assign.status === 'PRESENTE'
+                                  ? 'bg-green-100 text-green-600 hover:bg-green-200'
+                                  : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                                  }`}
+                                title={assign.status === 'PRESENTE' ? "Marcar como ausente" : "Confirmar presença"}
+                              >
+                                <CheckCircle size={16} />
+                              </button>
+
+                              <button
+                                onClick={() => handleRemoveAssignment(assign.id)}
+                                className="text-gray-300 hover:text-red-500 p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Remover"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>

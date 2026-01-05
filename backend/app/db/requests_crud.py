@@ -88,13 +88,26 @@ def create_assignment(db: Session, assignment: ShiftAssignmentCreate, user_id: i
     db.refresh(db_assignment) 
     return db_assignment
 
+    args = [assignment.shift_id, assignment.employee_id, "ASIGNADO", user_id, user_id]
+    # ... (código anterior) ... esto no es lo que quiero reemplazar, voy a appendear al final
+
 def delete_assignment(db: Session, assignment_id: int):
+    # ... (contenido existente) ...
     db_assign = db.query(ShiftAssignment).filter(ShiftAssignment.id == assignment_id).first()
     if db_assign:
         db.delete(db_assign)
         db.commit()
         return True
     return False
+
+def update_assignment_status(db: Session, assignment_id: int, status: str, user_id: int):
+    db_assign = db.query(ShiftAssignment).filter(ShiftAssignment.id == assignment_id).first()
+    if db_assign:
+        db_assign.status = status
+        db_assign.updated_by = user_id
+        db.commit()
+        db.refresh(db_assign)
+    return db_assign
 
 def update_daily_request_status(db: Session, request_id: int, status: str, user_id: int):
     db_request = db.query(DailyRequest).filter(DailyRequest.id == request_id).first()

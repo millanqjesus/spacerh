@@ -19,6 +19,9 @@ class ShiftAssignmentCreate(ShiftAssignmentBase):
     shift_id: int
     employee_id: int
 
+class ShiftAssignmentUpdate(BaseModel):
+    status: str
+
 class ShiftAssignmentResponse(ShiftAssignmentBase):
     id: int
     shift_id: int
