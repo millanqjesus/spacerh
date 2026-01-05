@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.dependencies import get_current_user
 from app.schemas.schemas import UserResponse
-from app.schemas.request_schemas import DailyRequestCreate, DailyRequestResponse, ShiftAssignmentCreate, ShiftAssignmentResponse
+from app.schemas.request_schemas import DailyRequestCreate, DailyRequestResponse, ShiftAssignmentCreate, ShiftAssignmentResponse, DailyRequestUpdate
 from app.db import requests_crud
 
 router = APIRouter(prefix="/daily-requests", tags=["Solicitudes Diarias"])
@@ -52,4 +52,37 @@ def remove_assignment(
     success = requests_crud.delete_assignment(db=db, assignment_id=assignment_id)
     if not success:
         raise HTTPException(status_code=404, detail="Asignación no encontrada")
+    return None
+
+@router.put("/{request_id}/status", response_model=DailyRequestResponse)
+def update_request_status(
+    request_id: int,
+    update_data: DailyRequestUpdate,
+    db: Session = Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Actualiza el estado de una solicitud (CONFIRMADA, CANCELADA, etc)"""
+    if not update_data.status:
+         raise HTTPException(status_code=400, detail="El campo 'status' es obligatorio")
+         
+    updated_request = requests_crud.update_daily_request_status(
+        db=db, 
+        request_id=request_id, 
+        status=update_data.status, 
+        user_id=current_user.id
+    )
+    if not updated_request:
+        raise HTTPException(status_code=404, detail="Solicitud no encontrada")
+    return updated_request
+
+@router.delete("/{request_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_request(
+    request_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Elimina una solicitud y sus turnos asociados"""
+    success = requests_crud.delete_daily_request(db=db, request_id=request_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Solicitud no encontrada")
     return None

@@ -95,3 +95,20 @@ def delete_assignment(db: Session, assignment_id: int):
         db.commit()
         return True
     return False
+
+def update_daily_request_status(db: Session, request_id: int, status: str, user_id: int):
+    db_request = db.query(DailyRequest).filter(DailyRequest.id == request_id).first()
+    if db_request:
+        db_request.status = status
+        db_request.updated_by = user_id
+        db.commit()
+        db.refresh(db_request)
+    return db_request
+
+def delete_daily_request(db: Session, request_id: int):
+    db_request = db.query(DailyRequest).filter(DailyRequest.id == request_id).first()
+    if db_request:
+        db.delete(db_request)
+        db.commit()
+        return True
+    return False

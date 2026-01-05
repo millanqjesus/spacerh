@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Loader2, Calendar, Clock, MoreVertical, Filter, Building } from 'lucide-react';
+import {
+  Plus, Search, Loader2, Calendar, Clock, MoreVertical,
+  Building, Trash2, XCircle, CheckCircle
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import RequestModal from '../components/RequestModal';
@@ -7,10 +10,13 @@ import { showDialog } from '../utils/alert';
 
 export default function Requests() {
   const [requests, setRequests] = useState([]);
-  const [companies, setCompanies] = useState({}); // Mapa de ID -> Nombre
+  const [companies, setCompanies] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Estado para el menú desplegable (3 puntitos)
+  const [openMenuId, setOpenMenuId] = useState(null);
 
   const navigate = useNavigate();
 
@@ -21,7 +27,6 @@ export default function Requests() {
   const fetchData = async () => {
     try {
       setIsLoading(true);
-
       const [reqResponse, compResponse] = await Promise.all([
         api.get('/daily-requests'),
         api.get('/companies')
@@ -29,6 +34,7 @@ export default function Requests() {
 
       setRequests(reqResponse.data);
 
+      // Mapa para mostrar nombres de empresas rápido
       const compMap = {};
       compResponse.data.forEach(c => {
         compMap[c.id] = c.name;
@@ -43,6 +49,56 @@ export default function Requests() {
     }
   };
 
+  // Acción: Cambiar Estado (Confirmar / Cancelar)
+  const handleStatusChange = async (request, newStatus) => {
+    setOpenMenuId(null);
+    try {
+      await api.put(`/daily-requests/${request.id}/status`, { status: newStatus });
+
+      // Actualizamos la lista localmente para feedback inmediato
+      const updatedRequests = requests.map(r =>
+        r.id === request.id ? { ...r, status: newStatus } : r
+      );
+      setRequests(updatedRequests);
+
+      showDialog({
+        title: 'Status Atualizado',
+        text: `A solicitação agora está ${newStatus}.`,
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false
+      });
+
+    } catch (error) {
+      console.error(error);
+      showDialog({ title: 'Erro', text: 'Erro ao atualizar status.', icon: 'error' });
+    }
+  };
+
+  // Acción: Eliminar Solicitud
+  const handleDelete = async (request) => {
+    setOpenMenuId(null);
+    const result = await showDialog({
+      title: 'Excluir Solicitação?',
+      text: 'Isso apagará a solicitação e todos os seus turnos permanentemente.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sim, excluir',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await api.delete(`/daily-requests/${request.id}`);
+        setRequests(requests.filter(r => r.id !== request.id));
+        showDialog({ title: 'Excluído', text: 'Solicitação removida.', icon: 'success' });
+      } catch (error) {
+        console.error(error);
+        showDialog({ title: 'Erro', text: 'Erro ao excluir.', icon: 'error' });
+      }
+    }
+  };
+
   const filteredRequests = requests.filter(req => {
     const companyName = companies[req.company_id] || '';
     return companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -50,7 +106,9 @@ export default function Requests() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" onClick={() => setOpenMenuId(null)}>
+
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Solicitações de Diárias</h1>
@@ -58,7 +116,7 @@ export default function Requests() {
         </div>
 
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={(e) => { e.stopPropagation(); setIsModalOpen(true); }}
           className="flex items-center justify-center gap-2 bg-space-orange text-white px-5 py-2.5 rounded-lg hover:bg-orange-600 transition-all shadow-sm hover:shadow-md font-medium text-sm"
         >
           <Plus size={18} />
@@ -66,6 +124,7 @@ export default function Requests() {
         </button>
       </div>
 
+      {/* Filtros */}
       <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex gap-4">
         <div className="relative flex-grow max-w-md">
           <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
@@ -79,6 +138,7 @@ export default function Requests() {
         </div>
       </div>
 
+      {/* Grid */}
       {isLoading ? (
         <div className="p-20 flex justify-center">
           <Loader2 className="animate-spin text-space-orange h-10 w-10" />
@@ -87,8 +147,9 @@ export default function Requests() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredRequests.length > 0 ? (
             filteredRequests.map((req) => (
-              <div key={req.id} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col">
+              <div key={req.id} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col relative">
 
+                {/* Cabecera Tarjeta */}
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 bg-orange-50 rounded-lg flex items-center justify-center text-space-orange">
@@ -96,15 +157,62 @@ export default function Requests() {
                     </div>
                     <div>
                       <h3 className="font-bold text-gray-800 line-clamp-1">{companies[req.company_id] || 'Empresa Desconhecida'}</h3>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${req.status === 'PENDIENTE' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${req.status === 'PENDIENTE' ? 'bg-yellow-100 text-yellow-700' :
+                          req.status === 'CONFIRMADA' ? 'bg-green-100 text-green-700' :
+                            'bg-gray-100 text-gray-600'
                         }`}>
                         {req.status}
                       </span>
                     </div>
                   </div>
-                  <button className="text-gray-400 hover:text-gray-600"><MoreVertical size={18} /></button>
+
+                  {/* MENÚ DE 3 PUNTOS */}
+                  <div className="relative">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenMenuId(openMenuId === req.id ? null : req.id);
+                      }}
+                      className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors"
+                    >
+                      <MoreVertical size={18} />
+                    </button>
+
+                    {/* Menú Flotante */}
+                    {openMenuId === req.id && (
+                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 z-10 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                        {req.status !== 'CONFIRMADA' && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleStatusChange(req, 'CONFIRMADA'); }}
+                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 flex items-center gap-2"
+                          >
+                            <CheckCircle size={16} /> Confirmar
+                          </button>
+                        )}
+
+                        {req.status !== 'CANCELADA' && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleStatusChange(req, 'CANCELADA'); }}
+                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 flex items-center gap-2"
+                          >
+                            <XCircle size={16} /> Cancelar
+                          </button>
+                        )}
+
+                        <div className="border-t border-gray-100 my-1"></div>
+
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDelete(req); }}
+                          className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                        >
+                          <Trash2 size={16} /> Excluir
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
+                {/* Detalles */}
                 <div className="space-y-3 text-sm text-gray-600 mb-4 flex-grow">
                   <div className="flex items-center gap-2">
                     <Calendar size={16} className="text-gray-400" />
@@ -121,6 +229,7 @@ export default function Requests() {
                   </div>
                 </div>
 
+                {/* Footer Tarjeta */}
                 <div className="pt-4 border-t border-gray-100 flex justify-between items-center text-sm">
                   <span className="text-gray-400 text-xs">ID: #{req.id}</span>
                   <button
@@ -140,6 +249,7 @@ export default function Requests() {
         </div>
       )}
 
+      {/* Modal para Crear Solicitudes */}
       <RequestModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
