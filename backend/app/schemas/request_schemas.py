@@ -8,6 +8,8 @@ class WorkShiftBase(BaseModel):
     end_time: datetime
     payment_amount: float = Field(..., gt=0, description="Valor a pagar por este turno")
     quantity: int = Field(default=1, gt=0, description="Cantidad de personas necesarias")
+    has_discount: bool = False
+    discount_percentage: Optional[float] = Field(default=0.0, ge=0, le=100, description="% de descuento si aplica")
 
 class WorkShiftCreate(WorkShiftBase):
     pass

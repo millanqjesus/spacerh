@@ -61,21 +61,19 @@ class WorkShift(Base):
     __table_args__ = {"schema": "business", "extend_existing": True}
 
     id = Column(Integer, primary_key=True, index=True)
-    
-    # Relación con la Solicitud Padre
     request_id = Column(Integer, ForeignKey('business.daily_requests.id'), nullable=False)
     
-    # Detalles del Turno
-    start_time = Column(DateTime(timezone=True), nullable=False) # Fecha y Hora exacta de inicio
-    end_time = Column(DateTime(timezone=True), nullable=False)   # Fecha y Hora exacta de fin
-    
-    payment_amount = Column(Float, nullable=False) # Monto a pagar ($) por este turno
-    quantity = Column(Integer, default=1, nullable=False) # Cantidad de personas requeridas
+    start_time = Column(DateTime(timezone=True), nullable=False)
+    end_time = Column(DateTime(timezone=True), nullable=False)
+    payment_amount = Column(Float, nullable=False)
+    quantity = Column(Integer, default=1, nullable=False)
 
-    # Auditoría
+    # --- NUEVOS CAMPOS SOLICITADOS ---
+    has_discount = Column(Boolean, default=False, nullable=False)
+    discount_percentage = Column(Float, default=0.0)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    
     created_by = Column(Integer, ForeignKey('auth.users.id'), nullable=False)
     updated_by = Column(Integer, ForeignKey('auth.users.id'), nullable=True)
 

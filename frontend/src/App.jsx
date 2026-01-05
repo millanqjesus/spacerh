@@ -5,6 +5,7 @@ import MainLayout from './layouts/MainLayout'; // Importamos el Layout
 import Users from './pages/Users';
 import Profile from './pages/Profile';
 import Companies from './pages/Companies';
+import Requests from './pages/Requests';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
             <Route path="/users" element={<Users />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/companies" element={<Companies />} />
+            <Route path="/requests" element={<Requests />} />
           </Route>
 
           {/* Fallback */}

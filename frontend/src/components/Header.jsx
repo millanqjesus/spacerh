@@ -20,6 +20,11 @@ const MENU_ITEMS = [
     allowedRoles: ['admin']
   },
   {
+    label: 'Solicitações',
+    path: '/requests',
+    allowedRoles: ['admin', 'lider']
+  },
+  {
     label: 'Configurações',
     path: '/settings',
     allowedRoles: ['admin', 'lider']
