@@ -1,21 +1,16 @@
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc
-from app.models.models import DailyRequest, WorkShift, ShiftAssignment, User
+from app.models.models import DailyRequest, WorkShift, ShiftAssignment
 from app.schemas.request_schemas import DailyRequestCreate, ShiftAssignmentCreate
 
+# ... (get_daily_request y demas funciones de lectura se mantienen igual) ...
 def get_daily_request(db: Session, request_id: int):
-    """
-    Obtiene una solicitud con sus turnos Y los empleados asignados a esos turnos.
-    """
     return db.query(DailyRequest).options(
-        # Carga los turnos
         joinedload(DailyRequest.shifts)
-        # Y dentro de cada turno, carga las asignaciones y los datos del empleado
         .joinedload(WorkShift.assignments)
         .joinedload(ShiftAssignment.employee)
     ).filter(DailyRequest.id == request_id).first()
 
-# ... (get_daily_requests y create_daily_request se mantienen igual) ...
 def get_daily_requests(db: Session, skip: int = 0, limit: int = 100, company_id: int = None):
     query = db.query(DailyRequest)
     if company_id:
@@ -52,19 +47,33 @@ def create_daily_request(db: Session, request: DailyRequestCreate, user_id: int)
     db.refresh(db_request)
     return db_request
 
-# --- NUEVA LÓGICA DE ASIGNACIÓN ---
+# --- LÓGICA DE ASIGNACIÓN MEJORADA ---
 
 def create_assignment(db: Session, assignment: ShiftAssignmentCreate, user_id: int):
-    # 1. Verificar si ya está asignado a ese turno (evitar duplicados)
+    # 1. Obtener el turno para ver el límite (quantity)
+    shift = db.query(WorkShift).filter(WorkShift.id == assignment.shift_id).first()
+    if not shift:
+        return "NOT_FOUND"
+
+    # 2. Contar cuántos ya están asignados
+    current_count = db.query(ShiftAssignment).filter(
+        ShiftAssignment.shift_id == assignment.shift_id
+    ).count()
+
+    # 3. Validar si está lleno
+    if current_count >= shift.quantity:
+        return "FULL"
+
+    # 4. Verificar si el empleado ya está en este turno
     exists = db.query(ShiftAssignment).filter(
         ShiftAssignment.shift_id == assignment.shift_id,
         ShiftAssignment.employee_id == assignment.employee_id
     ).first()
     
     if exists:
-        return None # O lanzar excepción
+        return "EXISTS"
 
-    # 2. Crear asignación
+    # 5. Crear asignación
     db_assignment = ShiftAssignment(
         shift_id=assignment.shift_id,
         employee_id=assignment.employee_id,
@@ -74,7 +83,9 @@ def create_assignment(db: Session, assignment: ShiftAssignmentCreate, user_id: i
     )
     db.add(db_assignment)
     db.commit()
-    db.refresh(db_assignment)
+    
+    # 6. Recargar para traer los datos del empleado (necesario para la respuesta del frontend)
+    db.refresh(db_assignment) 
     return db_assignment
 
 def delete_assignment(db: Session, assignment_id: int):
