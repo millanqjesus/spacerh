@@ -205,7 +205,12 @@ export default function RequestDetails() {
         isOpen={isSelectionModalOpen}
         onClose={() => setIsSelectionModalOpen(false)}
         shiftId={selectedShiftId}
-        onSuccess={() => fetchRequestDetails()} // Recargamos la vista al asignar
+        assignedEmployeeIds={
+          selectedShiftId && request.shifts
+            ? request.shifts.find(s => s.id === selectedShiftId)?.assignments.map(a => a.employee_id) || []
+            : []
+        }
+        onSuccess={() => fetchRequestDetails()}
       />
     </div>
   );

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { X, Search, UserPlus, Loader2, User, Plus } from 'lucide-react';
+import { X, Search, UserPlus, Loader2, User, Plus, Check } from 'lucide-react';
 import api from '../services/api';
 import { showDialog } from '../utils/alert';
 
-export default function EmployeeSelectionModal({ isOpen, onClose, shiftId, onSuccess }) {
+export default function EmployeeSelectionModal({ isOpen, onClose, shiftId, onSuccess, assignedEmployeeIds = [] }) {
   const [isVisible, setIsVisible] = useState(false);
   const [employees, setEmployees] = useState([]);
   const [filteredEmployees, setFilteredEmployees] = useState([]);
@@ -61,14 +61,6 @@ export default function EmployeeSelectionModal({ isOpen, onClose, shiftId, onSuc
         employee_id: employeeId
       });
 
-      await showDialog({
-        title: 'Sucesso!',
-        text: 'Colaborador escalado com sucesso.',
-        icon: 'success',
-        timer: 1500,
-        showConfirmButton: false
-      });
-
       if (onSuccess) onSuccess(); // Recargar datos en el padre
 
     } catch (error) {
@@ -117,28 +109,42 @@ export default function EmployeeSelectionModal({ isOpen, onClose, shiftId, onSuc
             <div className="text-center p-4 text-gray-500 text-sm">Nenhum colaborador disponível encontrado.</div>
           ) : (
             <div className="space-y-1">
-              {filteredEmployees.map(emp => (
-                <div key={emp.id} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors group">
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-gray-600 text-xs font-bold shadow-sm">
-                      {emp.first_name[0]}{emp.last_name[0]}
+              {filteredEmployees.map(emp => {
+                const isAssigned = assignedEmployeeIds.includes(emp.id);
+                return (
+                  <div key={emp.id} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors group">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-gray-600 text-xs font-bold shadow-sm">
+                        {emp.first_name[0]}{emp.last_name[0]}
+                      </div>
+                      <div>
+                        <p className={`text-sm font-medium ${isAssigned ? 'text-gray-400' : 'text-gray-900'}`}>
+                          {emp.first_name} {emp.last_name}
+                        </p>
+                        <p className="text-xs text-gray-500">{emp.email}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{emp.first_name} {emp.last_name}</p>
-                      <p className="text-xs text-gray-500">{emp.email}</p>
-                    </div>
-                  </div>
 
-                  <button
-                    onClick={() => handleAssign(emp.id)}
-                    disabled={assigningId === emp.id}
-                    className="p-2 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-space-orange hover:text-white hover:border-space-orange transition-all shadow-sm"
-                    title="Adicionar ao turno"
-                  >
-                    {assigningId === emp.id ? <Loader2 className="animate-spin h-4 w-4" /> : <Plus size={16} />}
-                  </button>
-                </div>
-              ))}
+                    <button
+                      onClick={() => handleAssign(emp.id)}
+                      disabled={assigningId === emp.id || isAssigned}
+                      className={`p-2 border rounded-lg transition-all shadow-sm ${isAssigned
+                        ? 'bg-gray-100 border-gray-200 text-green-600 cursor-not-allowed'
+                        : 'bg-white border-gray-200 text-gray-600 hover:bg-space-orange hover:text-white hover:border-space-orange'
+                        }`}
+                      title={isAssigned ? "Já escalado" : "Adicionar ao turno"}
+                    >
+                      {assigningId === emp.id ? (
+                        <Loader2 className="animate-spin h-4 w-4" />
+                      ) : isAssigned ? (
+                        <Check size={16} />
+                      ) : (
+                        <Plus size={16} />
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
