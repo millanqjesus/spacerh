@@ -6,6 +6,7 @@ import Users from './pages/Users';
 import Profile from './pages/Profile';
 import Companies from './pages/Companies';
 import Requests from './pages/Requests';
+import RequestDetails from './pages/RequestDetails';
 
 function App() {
   return (
@@ -26,9 +27,11 @@ function App() {
 
             {/* Aquí puedes agregar más páginas protegidas en el futuro */}
             <Route path="/users" element={<Users />} />
-            <Route path="/profile" element={<Profile />} />
             <Route path="/companies" element={<Companies />} />
             <Route path="/requests" element={<Requests />} />
+            <Route path="/requests/:id" element={<RequestDetails />} />
+
+            <Route path="/profile" element={<Profile />} />
           </Route>
 
           {/* Fallback */}

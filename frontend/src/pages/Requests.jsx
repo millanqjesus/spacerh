@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Loader2, Calendar, Clock, MoreVertical, Building } from 'lucide-react';
+import { Plus, Search, Loader2, Calendar, Clock, MoreVertical, Filter, Building } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import RequestModal from '../components/RequestModal';
 import { showDialog } from '../utils/alert';
@@ -11,7 +12,8 @@ export default function Requests() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Cargar datos al inicio
+  const navigate = useNavigate();
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -20,7 +22,6 @@ export default function Requests() {
     try {
       setIsLoading(true);
 
-      // 1. Cargamos solicitudes y empresas en paralelo
       const [reqResponse, compResponse] = await Promise.all([
         api.get('/daily-requests'),
         api.get('/companies')
@@ -28,7 +29,6 @@ export default function Requests() {
 
       setRequests(reqResponse.data);
 
-      // 2. Crear mapa de empresas para acceso rápido por ID
       const compMap = {};
       compResponse.data.forEach(c => {
         compMap[c.id] = c.name;
@@ -43,7 +43,6 @@ export default function Requests() {
     }
   };
 
-  // Filtrado local
   const filteredRequests = requests.filter(req => {
     const companyName = companies[req.company_id] || '';
     return companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -52,7 +51,6 @@ export default function Requests() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Solicitações de Diárias</h1>
@@ -68,7 +66,6 @@ export default function Requests() {
         </button>
       </div>
 
-      {/* Filtros */}
       <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex gap-4">
         <div className="relative flex-grow max-w-md">
           <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
@@ -82,7 +79,6 @@ export default function Requests() {
         </div>
       </div>
 
-      {/* Grid de Tarjetas */}
       {isLoading ? (
         <div className="p-20 flex justify-center">
           <Loader2 className="animate-spin text-space-orange h-10 w-10" />
@@ -93,7 +89,6 @@ export default function Requests() {
             filteredRequests.map((req) => (
               <div key={req.id} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col">
 
-                {/* Cabecera Tarjeta */}
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 bg-orange-50 rounded-lg flex items-center justify-center text-space-orange">
@@ -110,7 +105,6 @@ export default function Requests() {
                   <button className="text-gray-400 hover:text-gray-600"><MoreVertical size={18} /></button>
                 </div>
 
-                {/* Detalles */}
                 <div className="space-y-3 text-sm text-gray-600 mb-4 flex-grow">
                   <div className="flex items-center gap-2">
                     <Calendar size={16} className="text-gray-400" />
@@ -127,10 +121,14 @@ export default function Requests() {
                   </div>
                 </div>
 
-                {/* Footer Tarjeta */}
                 <div className="pt-4 border-t border-gray-100 flex justify-between items-center text-sm">
                   <span className="text-gray-400 text-xs">ID: #{req.id}</span>
-                  <button className="text-space-orange hover:text-orange-700 font-medium">Ver Detalhes &rarr;</button>
+                  <button
+                    onClick={() => navigate(`/requests/${req.id}`)}
+                    className="text-space-orange hover:text-orange-700 font-medium"
+                  >
+                    Ver Detalhes &rarr;
+                  </button>
                 </div>
               </div>
             ))
@@ -142,7 +140,6 @@ export default function Requests() {
         </div>
       )}
 
-      {/* Modal */}
       <RequestModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

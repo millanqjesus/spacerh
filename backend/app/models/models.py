@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, text, DateTime, ForeignKey, Date, Float
+from sqlalchemy.orm import relationship 
 from sqlalchemy.sql import func
 from app.db.database import Base 
 
@@ -17,6 +18,10 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
+    # ⚠️ CORRECCIÓN: Especificamos explícitamente qué llave foránea usar
+    # "ShiftAssignment.employee_id" le dice a SQLAlchemy que ignore created_by/updated_by para esta relación
+    assignments = relationship("ShiftAssignment", back_populates="employee", foreign_keys="ShiftAssignment.employee_id")
+
 class Company(Base):
     __tablename__ = "companies"
     __table_args__ = {"schema": "business", "extend_existing": True}
@@ -33,29 +38,22 @@ class Company(Base):
     created_by = Column(Integer, ForeignKey('auth.users.id'), nullable=False)
     updated_by = Column(Integer, ForeignKey('auth.users.id'), nullable=True)
 
-# --- TABLA: SOLICITUDES DE DIARIA (Cabecera) ---
 class DailyRequest(Base):
     __tablename__ = "daily_requests"
     __table_args__ = {"schema": "business", "extend_existing": True}
 
     id = Column(Integer, primary_key=True, index=True)
-    
-    # Relación con Empresa (Cliente)
     company_id = Column(Integer, ForeignKey('business.companies.id'), nullable=False)
+    request_date = Column(Date, nullable=False)
+    status = Column(String(20), server_default='PENDIENTE', nullable=False)
     
-    # Datos del Evento
-    request_date = Column(Date, nullable=False) # Fecha del servicio (solo día)
-    status = Column(String(20), server_default='PENDIENTE', nullable=False) # PENDIENTE, CONFIRMADA, FINALIZADA, CANCELADA
-    
-    # Auditoría Completa (Solicitado)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    
     created_by = Column(Integer, ForeignKey('auth.users.id'), nullable=False)
     updated_by = Column(Integer, ForeignKey('auth.users.id'), nullable=True)
 
+    shifts = relationship("WorkShift", back_populates="request", cascade="all, delete-orphan")
 
-# --- TABLA: TURNOS DE TRABAJO (Detalle) ---
 class WorkShift(Base):
     __tablename__ = "work_shifts"
     __table_args__ = {"schema": "business", "extend_existing": True}
@@ -63,12 +61,12 @@ class WorkShift(Base):
     id = Column(Integer, primary_key=True, index=True)
     request_id = Column(Integer, ForeignKey('business.daily_requests.id'), nullable=False)
     
-    start_time = Column(DateTime(timezone=True), nullable=False)
-    end_time = Column(DateTime(timezone=True), nullable=False)
+    start_time = Column(DateTime(timezone=False), nullable=False)
+    end_time = Column(DateTime(timezone=False), nullable=False)
+    
     payment_amount = Column(Float, nullable=False)
     quantity = Column(Integer, default=1, nullable=False)
-
-    # --- NUEVOS CAMPOS SOLICITADOS ---
+    
     has_discount = Column(Boolean, default=False, nullable=False)
     discount_percentage = Column(Float, default=0.0)
 
@@ -77,25 +75,29 @@ class WorkShift(Base):
     created_by = Column(Integer, ForeignKey('auth.users.id'), nullable=False)
     updated_by = Column(Integer, ForeignKey('auth.users.id'), nullable=True)
 
-# --- TABLA: ASIGNACIÓN DE EMPLEADOS A TURNOS ---
+    request = relationship("DailyRequest", back_populates="shifts")
+    
+    assignments = relationship("ShiftAssignment", back_populates="shift", cascade="all, delete-orphan")
+
 class ShiftAssignment(Base):
     __tablename__ = "shift_assignments"
     __table_args__ = {"schema": "business", "extend_existing": True}
 
     id = Column(Integer, primary_key=True, index=True)
-    
-    # Relación con el Turno
     shift_id = Column(Integer, ForeignKey('business.work_shifts.id'), nullable=False)
     
-    # Relación con el Empleado (Usuario con rol trabajador)
+    # Esta es la llave que nos interesa para la relación principal
     employee_id = Column(Integer, ForeignKey('auth.users.id'), nullable=False)
     
-    # Estado de la asignación (ej: ASIGNADO, CONFIRMADO, FINALIZADO, AUSENTE)
     status = Column(String(20), server_default='ASIGNADO', nullable=False)
     
-    # Auditoría
+    # Estas llaves causaban la ambigüedad
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    
     created_by = Column(Integer, ForeignKey('auth.users.id'), nullable=False)
     updated_by = Column(Integer, ForeignKey('auth.users.id'), nullable=True)
+
+    shift = relationship("WorkShift", back_populates="assignments")
+    
+    # ⚠️ CORRECCIÓN: Aquí también especificamos foreign_keys=[employee_id]
+    employee = relationship("User", back_populates="assignments", foreign_keys=[employee_id])

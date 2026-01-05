@@ -70,6 +70,6 @@ class DailyRequestResponse(DailyRequestBase):
     updated_by: Optional[int]
     
     # Nota: Si agregamos la relación en SQLAlchemy, podríamos descomentar esto:
-    # shifts: List[WorkShiftResponse] = [] 
+    shifts: List[WorkShiftResponse] = []
 
     model_config = ConfigDict(from_attributes=True)
