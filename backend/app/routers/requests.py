@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.dependencies import get_current_user
 from app.schemas.schemas import UserResponse
-from app.schemas.request_schemas import DailyRequestCreate, DailyRequestResponse, ShiftAssignmentCreate, ShiftAssignmentResponse, DailyRequestUpdate, ShiftAssignmentUpdate
+from app.schemas.request_schemas import DailyRequestCreate, DailyRequestResponse, ShiftAssignmentCreate, ShiftAssignmentResponse, DailyRequestUpdate, ShiftAssignmentUpdate, PaymentReportItem
 from app.db import requests_crud
 
 router = APIRouter(prefix="/daily-requests", tags=["Solicitudes Diarias"])
@@ -104,3 +104,17 @@ def delete_request(
     if not success:
         raise HTTPException(status_code=404, detail="Solicitud no encontrada")
     return None
+
+@router.get("/report/payments", response_model=List[PaymentReportItem])
+def get_payments_report(
+    start_date: str,
+    end_date: str,
+    company_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """
+    Genera un reporte de pagos para empleados 'PRESENTE'.
+    Fechas deben ser YYYY-MM-DD.
+    """
+    return requests_crud.get_payments_report(db=db, start_date=start_date, end_date=end_date, company_id=company_id)

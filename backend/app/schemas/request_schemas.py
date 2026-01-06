@@ -11,6 +11,14 @@ class EmployeeSimple(BaseModel):
     role: str
     model_config = ConfigDict(from_attributes=True)
 
+class PaymentReportItem(BaseModel):
+    date: date
+    company_name: str
+    employee_name: str
+    shift_time: str
+    amount: float
+    status: str
+
 # --- 1. ASIGNACIONES (Hijo de Turno) ---
 class ShiftAssignmentBase(BaseModel):
     status: str = "ASIGNADO"

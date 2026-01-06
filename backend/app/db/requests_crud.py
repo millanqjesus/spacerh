@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import desc
-from app.models.models import DailyRequest, WorkShift, ShiftAssignment
+from sqlalchemy import desc, and_
+from app.models.models import DailyRequest, WorkShift, ShiftAssignment, User, Company
 from app.schemas.request_schemas import DailyRequestCreate, ShiftAssignmentCreate
 
 # ... (get_daily_request y demas funciones de lectura se mantienen igual) ...
@@ -10,6 +10,46 @@ def get_daily_request(db: Session, request_id: int):
         .joinedload(WorkShift.assignments)
         .joinedload(ShiftAssignment.employee)
     ).filter(DailyRequest.id == request_id).first()
+
+def get_payments_report(db: Session, start_date, end_date, company_id: int = None):
+    query = db.query(
+        DailyRequest.request_date,
+        Company.name.label("company_name"),
+        User.first_name,
+        User.last_name,
+        WorkShift.start_time,
+        WorkShift.end_time,
+        WorkShift.payment_amount,
+        ShiftAssignment.status
+    ).join(WorkShift, WorkShift.request_id == DailyRequest.id)\
+     .join(ShiftAssignment, ShiftAssignment.shift_id == WorkShift.id)\
+     .join(User, User.id == ShiftAssignment.employee_id)\
+     .join(Company, Company.id == DailyRequest.company_id)\
+     .filter(
+         and_(
+             DailyRequest.request_date >= start_date,
+             DailyRequest.request_date <= end_date,
+             ShiftAssignment.status == 'PRESENTE'
+         )
+     )
+    
+    if company_id:
+        query = query.filter(DailyRequest.company_id == company_id)
+        
+    results = query.all()
+    
+    report_data = []
+    for r in results:
+        report_data.append({
+            "date": r.request_date,
+            "company_name": r.company_name,
+            "employee_name": f"{r.first_name} {r.last_name}",
+            "shift_time": f"{r.start_time.strftime('%H:%M')} - {r.end_time.strftime('%H:%M')}",
+            "amount": r.payment_amount,
+            "status": r.status
+        })
+        
+    return report_data
 
 def get_daily_requests(db: Session, skip: int = 0, limit: int = 100, company_id: int = None):
     query = db.query(DailyRequest)
