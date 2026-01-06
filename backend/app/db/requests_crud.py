@@ -20,6 +20,8 @@ def get_payments_report(db: Session, start_date, end_date, company_id: int = Non
         WorkShift.start_time,
         WorkShift.end_time,
         WorkShift.payment_amount,
+        WorkShift.has_discount,
+        WorkShift.discount_percentage,
         ShiftAssignment.status
     ).join(WorkShift, WorkShift.request_id == DailyRequest.id)\
      .join(ShiftAssignment, ShiftAssignment.shift_id == WorkShift.id)\
@@ -40,12 +42,16 @@ def get_payments_report(db: Session, start_date, end_date, company_id: int = Non
     
     report_data = []
     for r in results:
+        final_amount = r.payment_amount
+        if r.has_discount and r.discount_percentage:
+             final_amount = r.payment_amount * (1 - r.discount_percentage / 100)
+             
         report_data.append({
             "date": r.request_date,
             "company_name": r.company_name,
             "employee_name": f"{r.first_name} {r.last_name}",
             "shift_time": f"{r.start_time.strftime('%H:%M')} - {r.end_time.strftime('%H:%M')}",
-            "amount": r.payment_amount,
+            "amount": final_amount,
             "status": r.status
         })
         
