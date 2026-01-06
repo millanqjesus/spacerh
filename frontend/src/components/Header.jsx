@@ -1,4 +1,5 @@
-import { LogOut, Menu, User } from 'lucide-react';
+import { LogOut, Menu, ChevronDown, FileText, Users } from 'lucide-react';
+import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
 import { showDialog } from '../utils/alert'; // Importamos nuestra utilidad de alertas
@@ -22,6 +23,11 @@ const MENU_ITEMS = [
   {
     label: 'Solicitações',
     path: '/requests',
+    allowedRoles: ['admin', 'lider']
+  },
+  {
+    label: 'Relatórios',
+    path: '#', // Dropdown no navega
     allowedRoles: ['admin', 'lider']
   },
   {
@@ -75,6 +81,34 @@ export default function Header() {
 
           <nav className="hidden md:flex gap-6 text-sm font-medium text-gray-600">
             {visibleMenuItems.map((item) => {
+              if (item.label === 'Relatórios') {
+                return (
+                  <div key="reports" className="relative group">
+                    <button className="flex items-center gap-1 hover:text-space-orange transition-colors">
+                      Relatórios <ChevronDown size={14} />
+                    </button>
+
+                    {/* Dropdown Menu */}
+                    <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-100 shadow-xl rounded-xl overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-left -translate-y-2 group-hover:translate-y-0 z-50">
+                      <div className="p-1">
+                        <Link
+                          to="/reports/payments"
+                          className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-orange-50 hover:text-space-orange rounded-lg"
+                        >
+                          <FileText size={16} /> Pagos
+                        </Link>
+                        <Link
+                          to="/reports/attendance"
+                          className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-orange-50 hover:text-space-orange rounded-lg"
+                        >
+                          <Users size={16} /> Asistencias
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
               const isActive = location.pathname === item.path;
               return (
                 <Link

@@ -7,6 +7,8 @@ import Profile from './pages/Profile';
 import Companies from './pages/Companies';
 import Requests from './pages/Requests';
 import RequestDetails from './pages/RequestDetails';
+import PaymentsReport from './pages/PaymentsReport';
+import AttendanceReport from './pages/AttendanceReport';
 
 function App() {
   return (
@@ -30,6 +32,11 @@ function App() {
             <Route path="/companies" element={<Companies />} />
             <Route path="/requests" element={<Requests />} />
             <Route path="/requests/:id" element={<RequestDetails />} />
+
+            <Route path="/reports/payments" element={<PaymentsReport />} />
+            <Route path="/reports/attendance" element={<AttendanceReport />} />
+
+            <Route path="/profile" element={<Profile />} />
 
             <Route path="/profile" element={<Profile />} />
           </Route>
