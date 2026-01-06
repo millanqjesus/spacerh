@@ -94,7 +94,6 @@ export default function PaymentsReport() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
             <div className="relative">
-              <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
               <input
                 type="date"
                 name="startDate"
@@ -108,7 +107,6 @@ export default function PaymentsReport() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
             <div className="relative">
-              <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
               <input
                 type="date"
                 name="endDate"
@@ -122,7 +120,6 @@ export default function PaymentsReport() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Empresa (Opcional)</label>
             <div className="relative">
-              <Building className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
               <select
                 name="companyId"
                 value={filters.companyId}
