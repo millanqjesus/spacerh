@@ -33,7 +33,7 @@ const MENU_ITEMS = [
   {
     label: 'Configurações',
     path: '/settings',
-    allowedRoles: ['admin', 'lider']
+    allowedRoles: []
   },
   {
     label: 'Meu Perfil',

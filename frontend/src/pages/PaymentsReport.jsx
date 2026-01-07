@@ -1,14 +1,20 @@
 import { useState, useEffect, useMemo } from 'react';
-import { FileText, Download, Filter, Building, Calendar, Search } from 'lucide-react';
+import { FileText, Download, Filter, Building, Calendar, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import api from '../services/api';
 import * as XLSX from 'xlsx';
 import { showDialog } from '../utils/alert';
 
 export default function PaymentsReport() {
   const [companies, setCompanies] = useState([]);
+
+  // Default dates: First day of current month to Last day of current month
+  const today = new Date();
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
   const [filters, setFilters] = useState({
-    startDate: '',
-    endDate: '',
+    startDate: firstDay.toISOString().split('T')[0],
+    endDate: lastDay.toISOString().split('T')[0],
     companyId: ''
   });
   const [reportData, setReportData] = useState([]);
@@ -16,6 +22,8 @@ export default function PaymentsReport() {
 
   useEffect(() => {
     fetchCompanies();
+    // Auto-fetch data on mount
+    fetchReportData(firstDay.toISOString().split('T')[0], lastDay.toISOString().split('T')[0]);
   }, []);
 
   const fetchCompanies = async () => {
@@ -24,6 +32,27 @@ export default function PaymentsReport() {
       setCompanies(response.data);
     } catch (error) {
       console.error('Error fetching companies:', error);
+    }
+  };
+
+  const fetchReportData = async (start, end, companyId = '') => {
+    setLoading(true);
+    try {
+      const params = {
+        start_date: start,
+        end_date: end,
+        ...(companyId && { company_id: companyId })
+      };
+      const response = await api.get('/daily-requests/report/payments', { params });
+      setReportData(response.data);
+      if (response.data.length === 0) {
+        showDialog({ title: 'Sem resultados', text: 'Nenhum registro encontrado para o período selecionado.', icon: 'info' });
+      }
+    } catch (error) {
+      console.error('Error fetching report:', error);
+      showDialog({ title: 'Erro', text: 'Não foi possível gerar o relatório.', icon: 'error' });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -37,25 +66,7 @@ export default function PaymentsReport() {
       showDialog({ title: 'Atenção', text: 'Selecione as datas de início e fim.', icon: 'warning' });
       return;
     }
-
-    setLoading(true);
-    try {
-      const params = {
-        start_date: filters.startDate,
-        end_date: filters.endDate,
-        ...(filters.companyId && { company_id: filters.companyId })
-      };
-      const response = await api.get('/daily-requests/report/payments', { params });
-      setReportData(response.data);
-      if (response.data.length === 0) {
-        showDialog({ title: 'Sem resultados', text: 'Nenhum registro encontrado para o período selecionado.', icon: 'info' });
-      }
-    } catch (error) {
-      console.error('Error fetching report:', error);
-      showDialog({ title: 'Erro', text: 'Não foi possível gerar o relatório.', icon: 'error' });
-    } finally {
-      setLoading(false);
-    }
+    fetchReportData(filters.startDate, filters.endDate, filters.companyId);
   };
 
   /* Removed groupedData useMemo as data comes grouped from backend */
@@ -189,6 +200,21 @@ export default function PaymentsReport() {
               )}
             </tbody>
           </table>
+
+          {/* Paginación Visual */}
+          <div className="bg-white px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+            <span className="text-sm text-gray-700">
+              Mostrando <span className="font-medium">1</span> a <span className="font-medium">{reportData.length}</span> de <span className="font-medium">{reportData.length}</span> resultados
+            </span>
+            <div className="flex gap-1">
+              <button className="p-1 rounded hover:bg-gray-100 disabled:opacity-50" disabled>
+                <ChevronLeft size={20} className="text-gray-500" />
+              </button>
+              <button className="p-1 rounded hover:bg-gray-100 disabled:opacity-50" disabled>
+                <ChevronRight size={20} className="text-gray-500" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
