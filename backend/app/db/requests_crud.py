@@ -11,22 +11,22 @@ def get_daily_request(db: Session, request_id: int):
         .joinedload(ShiftAssignment.employee)
     ).filter(DailyRequest.id == request_id).first()
 
+from sqlalchemy.sql import func, case
+
 def get_payments_report(db: Session, start_date, end_date, company_id: int = None):
+    # Calcular el monto final considerando descuentos si aplica
+    amount_expr = case(
+        (WorkShift.has_discount == True, WorkShift.payment_amount * (1 - WorkShift.discount_percentage / 100.0)),
+        else_=WorkShift.payment_amount
+    )
+    
     query = db.query(
-        DailyRequest.request_date,
-        Company.name.label("company_name"),
         User.first_name,
         User.last_name,
-        WorkShift.start_time,
-        WorkShift.end_time,
-        WorkShift.payment_amount,
-        WorkShift.has_discount,
-        WorkShift.discount_percentage,
-        ShiftAssignment.status
-    ).join(WorkShift, WorkShift.request_id == DailyRequest.id)\
-     .join(ShiftAssignment, ShiftAssignment.shift_id == WorkShift.id)\
-     .join(User, User.id == ShiftAssignment.employee_id)\
-     .join(Company, Company.id == DailyRequest.company_id)\
+        func.sum(amount_expr).label("total_amount")
+    ).join(ShiftAssignment, ShiftAssignment.employee_id == User.id)\
+     .join(WorkShift, WorkShift.id == ShiftAssignment.shift_id)\
+     .join(DailyRequest, DailyRequest.id == WorkShift.request_id)\
      .filter(
          and_(
              DailyRequest.request_date >= start_date,
@@ -38,24 +38,19 @@ def get_payments_report(db: Session, start_date, end_date, company_id: int = Non
     if company_id:
         query = query.filter(DailyRequest.company_id == company_id)
         
+    # Agrupar por colaborador
+    query = query.group_by(User.id, User.first_name, User.last_name)\
+                 .order_by(User.first_name, User.last_name)
+                 
     results = query.all()
     
-    report_data = []
-    for r in results:
-        final_amount = r.payment_amount
-        if r.has_discount and r.discount_percentage:
-             final_amount = r.payment_amount * (1 - r.discount_percentage / 100)
-             
-        report_data.append({
-            "date": r.request_date,
-            "company_name": r.company_name,
+    return [
+        {
             "employee_name": f"{r.first_name} {r.last_name}",
-            "shift_time": f"{r.start_time.strftime('%H:%M')} - {r.end_time.strftime('%H:%M')}",
-            "amount": final_amount,
-            "status": r.status
-        })
-        
-    return report_data
+            "total_amount": float(r.total_amount or 0)
+        }
+        for r in results
+    ]
 
 def get_daily_requests(db: Session, skip: int = 0, limit: int = 100, company_id: int = None):
     query = db.query(DailyRequest)

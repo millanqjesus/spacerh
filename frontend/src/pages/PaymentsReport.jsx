@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { FileText, Download, Filter, Building, Calendar, Search } from 'lucide-react';
 import api from '../services/api';
 import * as XLSX from 'xlsx';
@@ -58,22 +58,21 @@ export default function PaymentsReport() {
     }
   };
 
+  /* Removed groupedData useMemo as data comes grouped from backend */
+
   const exportToExcel = () => {
     if (reportData.length === 0) return;
 
-    const formattedData = reportData.map(item => ({
-      'Data': new Date(item.date).toLocaleDateString('pt-BR'),
-      'Empresa': item.company_name,
+    const formattedData = reportData.map((item, index) => ({
+      '#': index + 1,
       'Colaborador': item.employee_name,
-      'Horário': item.shift_time,
-      'Status': item.status,
-      'Valor (R$)': item.amount
+      'Valor a Pagar (R$)': item.total_amount
     }));
 
     const ws = XLSX.utils.json_to_sheet(formattedData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Pagamentos");
-    XLSX.writeFile(wb, `Pagamentos_${filters.startDate}_${filters.endDate}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, "Pagamentos por Colaborador");
+    XLSX.writeFile(wb, `Pagamentos_Agrupados_${filters.startDate}_${filters.endDate}.xlsx`);
   };
 
   return (
@@ -84,7 +83,7 @@ export default function PaymentsReport() {
             <FileText className="text-space-orange" />
             Relatório de Pagamentos
           </h1>
-          <p className="text-gray-500">Gere relatórios de pagamentos por período e empresa.</p>
+          <p className="text-gray-500">Relatório consolidado de pagamentos por colaborador.</p>
         </div>
       </div>
 
@@ -163,37 +162,27 @@ export default function PaymentsReport() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empresa</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Colaborador</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horário</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor a Pagar</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {reportData.length > 0 ? (
                 reportData.map((item, index) => (
                   <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(item.date).toLocaleDateString('pt-BR')}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">
+                      {index + 1}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.company_name}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.employee_name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.shift_time}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                        {item.status}
-                      </span>
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">
-                      R$ {item.amount.toFixed(2)}
+                      R$ {item.total_amount.toFixed(2)}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan="3" className="px-6 py-12 text-center text-gray-500">
                     {loading ? 'Carregando...' : 'Nenhum pagamento encontrado. Selecione os filtros para buscar.'}
                   </td>
                 </tr>

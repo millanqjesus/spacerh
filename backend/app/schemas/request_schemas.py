@@ -12,12 +12,8 @@ class EmployeeSimple(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class PaymentReportItem(BaseModel):
-    date: date
-    company_name: str
     employee_name: str
-    shift_time: str
-    amount: float
-    status: str
+    total_amount: float
 
 # --- 1. ASIGNACIONES (Hijo de Turno) ---
 class ShiftAssignmentBase(BaseModel):
