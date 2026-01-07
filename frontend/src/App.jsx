@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
 import MainLayout from './layouts/MainLayout'; // Importamos el Layout
 import Users from './pages/Users';
 import Profile from './pages/Profile';
@@ -20,12 +21,7 @@ function App() {
 
           {/* RUTAS PROTEGIDAS (Con Layout) */}
           <Route element={<MainLayout />}>
-            <Route path="/dashboard" element={
-              <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
-                <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-                <p className="mt-2 text-gray-600">Bem-vindo ao sistema SPACE.</p>
-              </div>
-            } />
+            <Route path="/dashboard" element={<Dashboard />} />
 
             {/* Aquí puedes agregar más páginas protegidas en el futuro */}
             <Route path="/users" element={<Users />} />

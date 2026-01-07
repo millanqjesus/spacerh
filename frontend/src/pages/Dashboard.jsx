@@ -1,0 +1,188 @@
+import { useState, useEffect } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Filter, Calendar, Building, Search, BarChart2 } from 'lucide-react';
+import api from '../services/api';
+import { showDialog } from '../utils/alert';
+
+export default function Dashboard() {
+  const [companies, setCompanies] = useState([]);
+  const [stats, setStats] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // Default dates: First day of current month to Last day of current month
+  const today = new Date();
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+  const [filters, setFilters] = useState({
+    startDate: firstDay.toISOString().split('T')[0],
+    endDate: lastDay.toISOString().split('T')[0],
+    companyId: ''
+  });
+
+  useEffect(() => {
+    fetchCompanies();
+    fetchStats();
+  }, []);
+
+  const fetchCompanies = async () => {
+    try {
+      const response = await api.get('/companies/');
+      setCompanies(response.data);
+    } catch (error) {
+      console.error('Error fetching companies:', error);
+    }
+  };
+
+  const fetchStats = async () => {
+    setLoading(true);
+    try {
+      const params = {
+        start_date: filters.startDate,
+        end_date: filters.endDate,
+        ...(filters.companyId && { company_id: filters.companyId })
+      };
+
+      const response = await api.get('/daily-requests/stats/dashboard', { params });
+      setStats(response.data);
+
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+      showDialog({ title: 'Erro', text: 'Não foi possível carregar os dados do dashboard.', icon: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFilterChange = (e) => {
+    setFilters({ ...filters, [e.target.name]: e.target.value });
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    fetchStats();
+  };
+
+  return (
+    <div className="space-y-6 max-w-6xl mx-auto">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+            <BarChart2 className="text-space-orange" />
+            Dashboard
+          </h1>
+          <p className="text-gray-500">Visão geral das solicitações por empresa.</p>
+        </div>
+      </div>
+
+      {/* Filtros */}
+      <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+        <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
+            <div className="relative">
+              <input
+                type="date"
+                name="startDate"
+                value={filters.startDate}
+                onChange={handleFilterChange}
+                className="pl-9 w-full rounded-lg border-gray-300 focus:ring-space-orange focus:border-space-orange"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
+            <div className="relative">
+              <input
+                type="date"
+                name="endDate"
+                value={filters.endDate}
+                onChange={handleFilterChange}
+                className="pl-9 w-full rounded-lg border-gray-300 focus:ring-space-orange focus:border-space-orange"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Empresa (Opcional)</label>
+            <div className="relative">
+              <select
+                name="companyId"
+                value={filters.companyId}
+                onChange={handleFilterChange}
+                className="pl-9 w-full rounded-lg border-gray-300 focus:ring-space-orange focus:border-space-orange"
+              >
+                <option value="">Todas as Empresas</option>
+                {companies.map(company => (
+                  <option key={company.id} value={company.id}>{company.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 bg-space-orange text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
+            >
+              {loading ? 'Carregando...' : <><Search size={18} /> Filtrar</>}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Gráfico */}
+      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm min-h-[400px]">
+        <h2 className="text-lg font-bold text-gray-800 mb-6">Solicitações por Empresa</h2>
+
+        {stats.length > 0 ? (
+          <div className="h-[350px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={stats}
+                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis
+                  dataKey="company_name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#6B7280', fontSize: 12 }}
+                  dy={10}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#6B7280', fontSize: 12 }}
+                />
+                <Tooltip
+                  cursor={{ fill: '#F3F4F6' }}
+                  contentStyle={{
+                    backgroundColor: '#FFF',
+                    borderRadius: '8px',
+                    border: '1px solid #E5E7EB',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                />
+                <Bar
+                  dataKey="request_count"
+                  name="Solicitações"
+                  fill="#FF6B00"
+                  radius={[4, 4, 0, 0]}
+                  barSize={40}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-[300px] text-gray-400">
+            <BarChart2 size={48} className="mb-2 opacity-50" />
+            <p>Nenhum dado encontrado para o período.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

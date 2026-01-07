@@ -97,6 +97,33 @@ def get_attendance_report(db: Session, start_date, end_date, company_id: int = N
         for r in results
     ]
 
+def get_dashboard_stats(db: Session, start_date, end_date, company_id: int = None):
+    query = db.query(
+        Company.name.label("company_name"),
+        func.count(DailyRequest.id).label("request_count")
+    ).join(Company, Company.id == DailyRequest.company_id)\
+     .filter(
+         and_(
+             DailyRequest.request_date >= start_date,
+             DailyRequest.request_date <= end_date
+         )
+     )
+    
+    if company_id:
+        query = query.filter(DailyRequest.company_id == company_id)
+        
+    query = query.group_by(Company.name).order_by(Company.name)
+    results = query.all()
+    
+    return [
+        {
+            "company_name": r.company_name,
+            "request_count": r.request_count
+        }
+        for r in results
+    ]
+
+
 
 def get_daily_requests(db: Session, skip: int = 0, limit: int = 100, company_id: int = None):
     query = db.query(DailyRequest)

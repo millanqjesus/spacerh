@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.dependencies import get_current_user
 from app.schemas.schemas import UserResponse
-from app.schemas.request_schemas import DailyRequestCreate, DailyRequestResponse, ShiftAssignmentCreate, ShiftAssignmentResponse, DailyRequestUpdate, ShiftAssignmentUpdate, PaymentReportItem, AttendanceReportItem
+from app.schemas.request_schemas import DailyRequestCreate, DailyRequestResponse, ShiftAssignmentCreate, ShiftAssignmentResponse, DailyRequestUpdate, ShiftAssignmentUpdate, PaymentReportItem, AttendanceReportItem, DashboardStatsItem
 from app.db import requests_crud
 
 router = APIRouter(prefix="/daily-requests", tags=["Solicitudes Diarias"])
@@ -131,3 +131,17 @@ def get_attendance_report(
     Genera un reporte detallado de asistencia (por registro).
     """
     return requests_crud.get_attendance_report(db=db, start_date=start_date, end_date=end_date, company_id=company_id)
+
+@router.get("/stats/dashboard", response_model=List[DashboardStatsItem])
+def get_dashboard_stats(
+    start_date: str,
+    end_date: str,
+    company_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """
+    Retorna estadísticas para el dashboard (cantidad de solicitudes por empresa).
+    """
+    return requests_crud.get_dashboard_stats(db=db, start_date=start_date, end_date=end_date, company_id=company_id)
+

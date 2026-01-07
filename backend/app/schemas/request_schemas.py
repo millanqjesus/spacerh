@@ -23,6 +23,11 @@ class AttendanceReportItem(BaseModel):
     status: str
     amount: float
 
+class DashboardStatsItem(BaseModel):
+    company_name: str
+    request_count: int
+
+
 
 # --- 1. ASIGNACIONES (Hijo de Turno) ---
 class ShiftAssignmentBase(BaseModel):
