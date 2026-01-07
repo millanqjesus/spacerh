@@ -123,6 +123,38 @@ def get_dashboard_stats(db: Session, start_date, end_date, company_id: int = Non
         for r in results
     ]
 
+def get_attendance_stats(db: Session, start_date, end_date, company_id: int = None):
+    query = db.query(
+        Company.name.label("company_name"),
+        ShiftAssignment.status,
+        func.count(ShiftAssignment.id).label("count")
+    ).join(WorkShift, WorkShift.id == ShiftAssignment.shift_id)\
+     .join(DailyRequest, DailyRequest.id == WorkShift.request_id)\
+     .join(Company, Company.id == DailyRequest.company_id)\
+     .filter(
+         and_(
+             DailyRequest.request_date >= start_date,
+             DailyRequest.request_date <= end_date
+         )
+     )
+    
+    if company_id:
+        query = query.filter(DailyRequest.company_id == company_id)
+        
+    query = query.group_by(Company.name, ShiftAssignment.status).order_by(Company.name)
+    results = query.all()
+    
+    return [
+        {
+            "company_name": r.company_name,
+            "status": r.status,
+            "count": r.count
+        }
+        for r in results
+    ]
+
+
+
 
 
 def get_daily_requests(db: Session, skip: int = 0, limit: int = 100, company_id: int = None):

@@ -27,6 +27,13 @@ class DashboardStatsItem(BaseModel):
     company_name: str
     request_count: int
 
+class AttendanceStatsItem(BaseModel):
+    company_name: str
+    status: str
+    count: int
+
+
+
 
 
 # --- 1. ASIGNACIONES (Hijo de Turno) ---
