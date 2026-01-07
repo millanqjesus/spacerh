@@ -1,27 +1,215 @@
-import { Users, Download } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { FileText, Download, Filter, Building, Calendar, Search, Users } from 'lucide-react';
+import api from '../services/api';
+import * as XLSX from 'xlsx';
+import { showDialog } from '../utils/alert';
 
 export default function AttendanceReport() {
+  const [companies, setCompanies] = useState([]);
+  const [filters, setFilters] = useState({
+    startDate: '',
+    endDate: '',
+    companyId: ''
+  });
+  const [reportData, setReportData] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchCompanies();
+  }, []);
+
+  const fetchCompanies = async () => {
+    try {
+      const response = await api.get('/companies/');
+      setCompanies(response.data);
+    } catch (error) {
+      console.error('Error fetching companies:', error);
+    }
+  };
+
+  const handleFilterChange = (e) => {
+    setFilters({ ...filters, [e.target.name]: e.target.value });
+  };
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!filters.startDate || !filters.endDate) {
+      showDialog({ title: 'Atenção', text: 'Selecione as datas de início e fim.', icon: 'warning' });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const params = {
+        start_date: filters.startDate,
+        end_date: filters.endDate,
+        ...(filters.companyId && { company_id: filters.companyId })
+      };
+      const response = await api.get('/daily-requests/report/attendance', { params });
+      setReportData(response.data);
+      if (response.data.length === 0) {
+        showDialog({ title: 'Sem resultados', text: 'Nenhum registro encontrado para o período selecionado.', icon: 'info' });
+      }
+    } catch (error) {
+      console.error('Error fetching report:', error);
+      showDialog({ title: 'Erro', text: 'Não foi possível gerar o relatório.', icon: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const exportToExcel = () => {
+    if (reportData.length === 0) return;
+
+    const formattedData = reportData.map(item => ({
+      'Data': new Date(item.date).toLocaleDateString('pt-BR'),
+      'Empresa': item.company_name,
+      'Colaborador': item.employee_name,
+      'Turno': item.shift_time,
+      'Status': item.status,
+      'Valor (R$)': item.amount
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(formattedData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Presença");
+    XLSX.writeFile(wb, `Relatorio_Presenca_${filters.startDate}_${filters.endDate}.xlsx`);
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'PRESENTE': return 'bg-green-100 text-green-800';
+      case 'FALTOU': return 'bg-red-100 text-red-800';
+      case 'ASIGNADO': return 'bg-blue-100 text-blue-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-6xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Relatório de Presença</h1>
-          <p className="text-gray-500">Acompanhe a frequência e pontualidade dos colaboradores.</p>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+            <Users className="text-space-orange" />
+            Relatório de Presença
+          </h1>
+          <p className="text-gray-500">Acompanhe a frequência detalhada dos colaboradores.</p>
         </div>
-        <button className="flex items-center justify-center gap-2 bg-gray-100 text-gray-400 cursor-not-allowed px-5 py-2.5 rounded-lg font-medium text-sm">
-          <Download size={18} />
-          Exportar
-        </button>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-12 text-center">
-        <div className="w-16 h-16 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Users size={32} />
+      {/* Filtros */}
+      <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+        <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
+            <div className="relative">
+              <input
+                type="date"
+                name="startDate"
+                value={filters.startDate}
+                onChange={handleFilterChange}
+                className="pl-9 w-full rounded-lg border-gray-300 focus:ring-space-orange focus:border-space-orange"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
+            <div className="relative">
+              <input
+                type="date"
+                name="endDate"
+                value={filters.endDate}
+                onChange={handleFilterChange}
+                className="pl-9 w-full rounded-lg border-gray-300 focus:ring-space-orange focus:border-space-orange"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Empresa (Opcional)</label>
+            <div className="relative">
+              <select
+                name="companyId"
+                value={filters.companyId}
+                onChange={handleFilterChange}
+                className="pl-9 w-full rounded-lg border-gray-300 focus:ring-space-orange focus:border-space-orange"
+              >
+                <option value="">Todas as Empresas</option>
+                {companies.map(company => (
+                  <option key={company.id} value={company.id}>{company.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 bg-space-orange text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
+            >
+              {loading ? 'Buscando...' : <><Search size={18} /> Filtrar</>}
+            </button>
+
+            {reportData.length > 0 && (
+              <button
+                type="button"
+                onClick={exportToExcel}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                title="Exportar Excel"
+              >
+                <Download size={18} />
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
+
+      {/* Resultados */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empresa</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Colaborador</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Turno</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {reportData.length > 0 ? (
+                reportData.map((item, index) => (
+                  <tr key={index} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {new Date(item.date).toLocaleDateString('pt-BR')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.company_name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.employee_name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.shift_time}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(item.status)}`}>
+                        {item.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-600">
+                      R$ {item.amount.toFixed(2)}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
+                    {loading ? 'Carregando...' : 'Nenhum registro encontrado. Selecione os filtros para buscar.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-        <h2 className="text-lg font-bold text-gray-800 mb-2">Em breve...</h2>
-        <p className="text-gray-500 max-w-md mx-auto">
-          Em breve você poderá visualizar métricas detalhadas de presença, faltas e horas trabalhadas.
-        </p>
       </div>
     </div>
   );

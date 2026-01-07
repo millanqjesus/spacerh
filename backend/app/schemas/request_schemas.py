@@ -15,6 +15,15 @@ class PaymentReportItem(BaseModel):
     employee_name: str
     total_amount: float
 
+class AttendanceReportItem(BaseModel):
+    date: date
+    company_name: str
+    employee_name: str
+    shift_time: str
+    status: str
+    amount: float
+
+
 # --- 1. ASIGNACIONES (Hijo de Turno) ---
 class ShiftAssignmentBase(BaseModel):
     status: str = "ASIGNADO"

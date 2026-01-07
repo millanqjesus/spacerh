@@ -52,6 +52,52 @@ def get_payments_report(db: Session, start_date, end_date, company_id: int = Non
         for r in results
     ]
 
+def get_attendance_report(db: Session, start_date, end_date, company_id: int = None):
+    # Calcular monto individual (con descuento si aplica) para mostrar en el reporte detallado
+    amount_expr = case(
+        (WorkShift.has_discount == True, WorkShift.payment_amount * (1 - WorkShift.discount_percentage / 100.0)),
+        else_=WorkShift.payment_amount
+    )
+
+    query = db.query(
+        DailyRequest.request_date,
+        Company.name.label("company_name"),
+        User.first_name,
+        User.last_name,
+        WorkShift.start_time,
+        WorkShift.end_time,
+        ShiftAssignment.status,
+        amount_expr.label("final_amount")
+    ).join(WorkShift, WorkShift.request_id == DailyRequest.id)\
+     .join(ShiftAssignment, ShiftAssignment.shift_id == WorkShift.id)\
+     .join(User, User.id == ShiftAssignment.employee_id)\
+     .join(Company, Company.id == DailyRequest.company_id)\
+     .filter(
+         and_(
+             DailyRequest.request_date >= start_date,
+             DailyRequest.request_date <= end_date
+         )
+     )
+    
+    if company_id:
+        query = query.filter(DailyRequest.company_id == company_id)
+        
+    query = query.order_by(DailyRequest.request_date, User.first_name)
+    results = query.all()
+    
+    return [
+        {
+            "date": r.request_date,
+            "company_name": r.company_name,
+            "employee_name": f"{r.first_name} {r.last_name}",
+            "shift_time": f"{r.start_time.strftime('%H:%M')} - {r.end_time.strftime('%H:%M')}",
+            "status": r.status,
+            "amount": float(r.final_amount or 0)
+        }
+        for r in results
+    ]
+
+
 def get_daily_requests(db: Session, skip: int = 0, limit: int = 100, company_id: int = None):
     query = db.query(DailyRequest)
     if company_id:
