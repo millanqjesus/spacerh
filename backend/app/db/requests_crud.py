@@ -157,10 +157,14 @@ def get_attendance_stats(db: Session, start_date, end_date, company_id: int = No
 
 
 
-def get_daily_requests(db: Session, skip: int = 0, limit: int = 100, company_id: int = None):
+def get_daily_requests(db: Session, skip: int = 0, limit: int = 100, company_id: int = None, start_date: str = None, end_date: str = None):
     query = db.query(DailyRequest)
     if company_id:
         query = query.filter(DailyRequest.company_id == company_id)
+    if start_date:
+        query = query.filter(DailyRequest.request_date >= start_date)
+    if end_date:
+        query = query.filter(DailyRequest.request_date <= end_date)
     return query.order_by(desc(DailyRequest.request_date)).offset(skip).limit(limit).all()
 
 def create_daily_request(db: Session, request: DailyRequestCreate, user_id: int):

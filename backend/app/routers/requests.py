@@ -14,8 +14,23 @@ def create_daily_request(request: DailyRequestCreate, db: Session = Depends(get_
     return requests_crud.create_daily_request(db=db, request=request, user_id=current_user.id)
 
 @router.get("/", response_model=List[DailyRequestResponse])
-def read_daily_requests(skip: int = 0, limit: int = 100, company_id: Optional[int] = None, db: Session = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):
-    return requests_crud.get_daily_requests(db=db, skip=skip, limit=limit, company_id=company_id)
+def read_daily_requests(
+    skip: int = 0, 
+    limit: int = 100, 
+    company_id: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(get_db), 
+    current_user: UserResponse = Depends(get_current_user)
+):
+    return requests_crud.get_daily_requests(
+        db=db, 
+        skip=skip, 
+        limit=limit, 
+        company_id=company_id,
+        start_date=start_date,
+        end_date=end_date
+    )
 
 @router.get("/{request_id}", response_model=DailyRequestResponse)
 def read_daily_request(request_id: int, db: Session = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):

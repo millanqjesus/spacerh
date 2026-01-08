@@ -10,10 +10,20 @@ import { showDialog } from '../utils/alert';
 
 export default function Requests() {
   const [requests, setRequests] = useState([]);
-  const [companies, setCompanies] = useState({});
+  const [companies, setCompanies] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+
+  // Default dates: First day of current month to Last day of current month
+  const today = new Date();
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+  const [filters, setFilters] = useState({
+    startDate: firstDay.toISOString().split('T')[0],
+    endDate: lastDay.toISOString().split('T')[0],
+    companyId: ''
+  });
 
   // Estado para el menú desplegable (3 puntitos)
   const [openMenuId, setOpenMenuId] = useState(null);
@@ -27,19 +37,20 @@ export default function Requests() {
   const fetchData = async () => {
     try {
       setIsLoading(true);
+
+      const params = {
+        start_date: filters.startDate,
+        end_date: filters.endDate,
+        ...(filters.companyId && { company_id: filters.companyId })
+      };
+
       const [reqResponse, compResponse] = await Promise.all([
-        api.get('/daily-requests'),
+        api.get('/daily-requests', { params }),
         api.get('/companies')
       ]);
 
       setRequests(reqResponse.data);
-
-      // Mapa para mostrar nombres de empresas rápido
-      const compMap = {};
-      compResponse.data.forEach(c => {
-        compMap[c.id] = c.name;
-      });
-      setCompanies(compMap);
+      setCompanies(compResponse.data);
 
     } catch (error) {
       console.error("Error cargando datos:", error);
@@ -47,6 +58,15 @@ export default function Requests() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleFilterChange = (e) => {
+    setFilters({ ...filters, [e.target.name]: e.target.value });
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    fetchData();
   };
 
   // Acción: Cambiar Estado (Confirmar / Cancelar)
@@ -99,12 +119,6 @@ export default function Requests() {
     }
   };
 
-  const filteredRequests = requests.filter(req => {
-    const companyName = companies[req.company_id] || '';
-    return companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      req.status.toLowerCase().includes(searchTerm.toLowerCase());
-  });
-
   return (
     <div className="space-y-6" onClick={() => setOpenMenuId(null)}>
 
@@ -125,17 +139,54 @@ export default function Requests() {
       </div>
 
       {/* Filtros */}
-      <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex gap-4">
-        <div className="relative flex-grow max-w-md">
-          <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
-          <input
-            type="text"
-            placeholder="Buscar por empresa ou status..."
-            className="w-full pl-10 p-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-space-orange focus:border-space-orange outline-none"
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-          />
-        </div>
+      <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+        <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
+            <input
+              type="date"
+              name="startDate"
+              value={filters.startDate}
+              onChange={handleFilterChange}
+              className="w-full rounded-lg border-gray-300 focus:ring-space-orange focus:border-space-orange"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
+            <input
+              type="date"
+              name="endDate"
+              value={filters.endDate}
+              onChange={handleFilterChange}
+              className="w-full rounded-lg border-gray-300 focus:ring-space-orange focus:border-space-orange"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Empresa (Opcional)</label>
+            <select
+              name="companyId"
+              value={filters.companyId}
+              onChange={handleFilterChange}
+              className="w-full rounded-lg border-gray-300 focus:ring-space-orange focus:border-space-orange"
+            >
+              <option value="">Todas as Empresas</option>
+              {companies.map(company => (
+                <option key={company.id} value={company.id}>{company.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <button
+              type="submit"
+              className="w-full bg-space-orange text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
+            >
+              <Search size={18} /> Filtrar
+            </button>
+          </div>
+        </form>
       </div>
 
       {/* Grid */}
@@ -145,8 +196,8 @@ export default function Requests() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredRequests.length > 0 ? (
-            filteredRequests.map((req) => (
+          {requests.length > 0 ? (
+            requests.map((req) => (
               <div key={req.id} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col relative">
 
                 {/* Cabecera Tarjeta */}
@@ -156,10 +207,12 @@ export default function Requests() {
                       <Building size={20} />
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-800 line-clamp-1">{companies[req.company_id] || 'Empresa Desconhecida'}</h3>
+                      <h3 className="font-bold text-gray-800 line-clamp-1">
+                        {companies.find(c => c.id === req.company_id)?.name || 'Empresa Desconhecida'}
+                      </h3>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${req.status === 'PENDIENTE' ? 'bg-yellow-100 text-yellow-700' :
-                          req.status === 'CONFIRMADA' ? 'bg-green-100 text-green-700' :
-                            'bg-gray-100 text-gray-600'
+                        req.status === 'CONFIRMADA' ? 'bg-green-100 text-green-700' :
+                          'bg-gray-100 text-gray-600'
                         }`}>
                         {req.status}
                       </span>
