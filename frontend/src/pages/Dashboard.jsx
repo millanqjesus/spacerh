@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Filter, Calendar, Building, Search, BarChart2, Users } from 'lucide-react';
+import { BarChart2, Users } from 'lucide-react';
 import api from '../services/api';
+import DateCompanyFilter from '../components/DateCompanyFilter';
 import { showDialog } from '../utils/alert';
 
 export default function Dashboard() {
@@ -104,62 +105,13 @@ export default function Dashboard() {
       </div>
 
       {/* Filtros */}
-      <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
-        <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
-            <div className="relative">
-              <input
-                type="date"
-                name="startDate"
-                value={filters.startDate}
-                onChange={handleFilterChange}
-                className="pl-9 w-full rounded-lg border-gray-300 focus:ring-space-orange focus:border-space-orange"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
-            <div className="relative">
-              <input
-                type="date"
-                name="endDate"
-                value={filters.endDate}
-                onChange={handleFilterChange}
-                className="pl-9 w-full rounded-lg border-gray-300 focus:ring-space-orange focus:border-space-orange"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Empresa (Opcional)</label>
-            <div className="relative">
-              <select
-                name="companyId"
-                value={filters.companyId}
-                onChange={handleFilterChange}
-                className="pl-9 w-full rounded-lg border-gray-300 focus:ring-space-orange focus:border-space-orange"
-              >
-                <option value="">Todas as Empresas</option>
-                {companies.map(company => (
-                  <option key={company.id} value={company.id}>{company.name}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="flex gap-2">
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-space-orange text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
-            >
-              {loading ? 'Carregando...' : <><Search size={18} /> Filtrar</>}
-            </button>
-          </div>
-        </form>
-      </div>
+      <DateCompanyFilter
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        onSearch={handleSearch}
+        companies={companies}
+        loading={loading}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Gráfico de Barras - Solicitações por Empresa */}

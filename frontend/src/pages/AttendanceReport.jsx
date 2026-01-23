@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { FileText, Download, Filter, Building, Calendar, Search, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FileText, Download, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import api from '../services/api';
+import DateCompanyFilter from '../components/DateCompanyFilter';
 import * as XLSX from 'xlsx';
 import { showDialog } from '../utils/alert';
 
@@ -109,73 +110,31 @@ export default function AttendanceReport() {
       </div>
 
       {/* Filtros */}
-      <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
-        <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
-            <div className="relative">
-              <input
-                type="date"
-                name="startDate"
-                value={filters.startDate}
-                onChange={handleFilterChange}
-                className="pl-9 w-full rounded-lg border-gray-300 focus:ring-space-orange focus:border-space-orange"
-              />
-            </div>
-          </div>
+      <div className="flex gap-4">
+        <div className="flex-1">
+          <DateCompanyFilter
+            filters={filters}
+            onFilterChange={handleFilterChange}
+            onSearch={handleSearch}
+            companies={companies}
+            loading={loading}
+          />
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
-            <div className="relative">
-              <input
-                type="date"
-                name="endDate"
-                value={filters.endDate}
-                onChange={handleFilterChange}
-                className="pl-9 w-full rounded-lg border-gray-300 focus:ring-space-orange focus:border-space-orange"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Empresa (Opcional)</label>
-            <div className="relative">
-              <select
-                name="companyId"
-                value={filters.companyId}
-                onChange={handleFilterChange}
-                className="pl-9 w-full rounded-lg border-gray-300 focus:ring-space-orange focus:border-space-orange"
-              >
-                <option value="">Todas as Empresas</option>
-                {companies.map(company => (
-                  <option key={company.id} value={company.id}>{company.name}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="flex gap-2">
+        {reportData.length > 0 && (
+          <div className="flex items-end">
             <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-space-orange text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
+              type="button"
+              onClick={exportToExcel}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2 h-[42px]"
+              title="Exportar Excel"
             >
-              {loading ? 'Buscando...' : <><Search size={18} /> Filtrar</>}
+              <Download size={18} />
             </button>
-
-            {reportData.length > 0 && (
-              <button
-                type="button"
-                onClick={exportToExcel}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                title="Exportar Excel"
-              >
-                <Download size={18} />
-              </button>
-            )}
           </div>
-        </form>
+        )}
       </div>
+
 
       {/* Resultados */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
