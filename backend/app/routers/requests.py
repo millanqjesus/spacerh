@@ -36,7 +36,7 @@ def read_daily_requests(
 def read_daily_request(request_id: int, db: Session = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):
     db_request = requests_crud.get_daily_request(db=db, request_id=request_id)
     if db_request is None:
-        raise HTTPException(status_code=404, detail="Solicitud no encontrada")
+        raise HTTPException(status_code=404, detail="Solicitação não encontrada")
     return db_request
 
 # --- ASIGNACIONES ---
@@ -50,11 +50,11 @@ def assign_employee(
     result = requests_crud.create_assignment(db=db, assignment=assignment, user_id=current_user.id)
     
     if result == "NOT_FOUND":
-        raise HTTPException(status_code=404, detail="Turno no encontrado")
+        raise HTTPException(status_code=404, detail="Turno não encontrado")
     if result == "FULL":
-        raise HTTPException(status_code=400, detail="El turno ya está completo (Cupos llenos)")
+        raise HTTPException(status_code=400, detail="O turno já está completo (Vagas preenchidas)")
     if result == "EXISTS":
-        raise HTTPException(status_code=400, detail="El empleado ya está asignado a este turno")
+        raise HTTPException(status_code=400, detail="O colaborador já está escalado neste turno")
         
     return result
 
@@ -66,7 +66,7 @@ def remove_assignment(
 ):
     success = requests_crud.delete_assignment(db=db, assignment_id=assignment_id)
     if not success:
-        raise HTTPException(status_code=404, detail="Asignación no encontrada")
+        raise HTTPException(status_code=404, detail="Escalação não encontrada")
     return None
 
 @router.put("/assignments/{assignment_id}/status", response_model=ShiftAssignmentResponse)
@@ -84,7 +84,7 @@ def update_assignment_status(
         user_id=current_user.id
     )
     if not updated_assignment:
-        raise HTTPException(status_code=404, detail="Asignación no encontrada")
+        raise HTTPException(status_code=404, detail="Escalação não encontrada")
     return updated_assignment
 
 @router.put("/{request_id}/status", response_model=DailyRequestResponse)
@@ -96,7 +96,7 @@ def update_request_status(
 ):
     """Actualiza el estado de una solicitud (CONFIRMADA, CANCELADA, etc)"""
     if not update_data.status:
-         raise HTTPException(status_code=400, detail="El campo 'status' es obligatorio")
+         raise HTTPException(status_code=400, detail="O campo 'status' é obrigatório")
          
     updated_request = requests_crud.update_daily_request_status(
         db=db, 
@@ -105,7 +105,7 @@ def update_request_status(
         user_id=current_user.id
     )
     if not updated_request:
-        raise HTTPException(status_code=404, detail="Solicitud no encontrada")
+        raise HTTPException(status_code=404, detail="Solicitação não encontrada")
     return updated_request
 
 @router.delete("/{request_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -117,7 +117,7 @@ def delete_request(
     """Elimina una solicitud y sus turnos asociados"""
     success = requests_crud.delete_daily_request(db=db, request_id=request_id)
     if not success:
-        raise HTTPException(status_code=404, detail="Solicitud no encontrada")
+        raise HTTPException(status_code=404, detail="Solicitação não encontrada")
     return None
 
 @router.get("/report/payments", response_model=List[PaymentReportItem])

@@ -19,7 +19,7 @@ def get_db():
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="No se pudieron validar las credenciales",
+        detail="Não foi possível validar as credenciais",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
@@ -36,7 +36,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         
     # Validamos también que el usuario esté activo
     if not user.is_active:
-        raise HTTPException(status_code=400, detail="Usuario inactivo")
+        raise HTTPException(status_code=400, detail="Usuário inativo")
         
     return user
 
@@ -54,7 +54,7 @@ class RoleChecker:
         if user.role not in self.allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, 
-                detail="No tienes permisos suficientes para realizar esta acción"
+                detail="Você não tem permissão suficiente para realizar esta ação"
             )
         return user
 

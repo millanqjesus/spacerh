@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { X, Key, Eye, EyeOff, Loader2 } from 'lucide-react';
 import api from '../services/api';
-import { showDialog } from '../utils/alert'; // Importamos la utilidad de alertas
+import { showDialog } from '../utils/alert';
+import { parseApiError } from '../utils/parseApiError';
 
 export default function ChangePasswordModal({ isOpen, onClose, user }) {
   const [isVisible, setIsVisible] = useState(false);
@@ -45,7 +46,7 @@ export default function ChangePasswordModal({ isOpen, onClose, user }) {
       // CAMBIO: Alerta de error personalizada
       showDialog({
         title: 'Erro',
-        text: 'Erro ao alterar a senha. Tente novamente.',
+        text: parseApiError(error, 'Erro ao alterar a senha. Tente novamente.'),
         icon: 'error'
       });
     }

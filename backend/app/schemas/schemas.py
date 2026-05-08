@@ -26,15 +26,15 @@ class UserCreate(BaseModel):
     @classmethod
     def validate_password_strength(cls, v):
         if len(v) < 6:
-            raise ValueError('La contraseña debe tener al menos 6 caracteres')
+            raise ValueError('A senha deve ter pelo menos 6 caracteres')
         if not re.search(r'[A-Z]', v):
-            raise ValueError('Debe tener mayúscula')
+            raise ValueError('Deve conter letra maiúscula')
         if not re.search(r'[a-z]', v):
-            raise ValueError('Debe tener minúscula')
+            raise ValueError('Deve conter letra minúscula')
         if not re.search(r'\d', v):
-            raise ValueError('Debe tener número')
+            raise ValueError('Deve conter número')
         if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
-            raise ValueError('Debe tener carácter especial')
+            raise ValueError('Deve conter caractere especial')
         return v
 
 # --- CLASE DE ACTUALIZACIÓN (Update) ---

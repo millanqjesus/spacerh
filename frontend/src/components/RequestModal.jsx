@@ -3,6 +3,7 @@ import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { X, Loader2, Calendar, Clock, DollarSign, Users as UsersIcon, Plus, Trash2, Building, Percent } from 'lucide-react';
 import api from '../services/api';
 import { showDialog } from '../utils/alert';
+import { parseApiError } from '../utils/parseApiError';
 
 // Componente interno para fila de turno
 const ShiftItem = ({ index, register, remove, control, errors }) => {
@@ -200,7 +201,7 @@ export default function RequestModal({ isOpen, onClose, onSuccess }) {
 
     } catch (error) {
       console.error(error);
-      showDialog({ title: 'Erro', text: 'Erro ao criar solicitação.', icon: 'error' });
+      showDialog({ title: 'Erro', text: parseApiError(error, 'Erro ao criar solicitação.'), icon: 'error' });
     }
   };
 

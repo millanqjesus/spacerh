@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Search, UserPlus, Loader2, User, Plus, Check } from 'lucide-react';
 import api from '../services/api';
 import { showDialog } from '../utils/alert';
+import { parseApiError } from '../utils/parseApiError';
 
 export default function EmployeeSelectionModal({ isOpen, onClose, shiftId, onSuccess, assignedEmployeeIds = [] }) {
   const [isVisible, setIsVisible] = useState(false);
@@ -65,7 +66,7 @@ export default function EmployeeSelectionModal({ isOpen, onClose, shiftId, onSuc
 
     } catch (error) {
       console.error(error);
-      const msg = error.response?.data?.detail || "Erro ao escalar colaborador.";
+      const msg = parseApiError(error, 'Erro ao escalar colaborador.');
       showDialog({ title: 'Erro', text: msg, icon: 'error' });
     } finally {
       setAssigningId(null);

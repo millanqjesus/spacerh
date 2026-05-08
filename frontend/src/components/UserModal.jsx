@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { X, Loader2, Eye, EyeOff } from 'lucide-react';
 import api from '../services/api';
 import { showDialog } from '../utils/alert';
+import { parseApiError } from '../utils/parseApiError';
 
 export default function UserModal({ isOpen, onClose, user, onSuccess }) {
   const [isVisible, setIsVisible] = useState(false);
@@ -89,7 +90,7 @@ export default function UserModal({ isOpen, onClose, user, onSuccess }) {
       console.error(error);
       showDialog({
         title: 'Erro',
-        text: error.response?.data?.detail || 'Ocorreu um erro ao salvar os dados.',
+        text: parseApiError(error, 'Ocorreu um erro ao salvar os dados.'),
         icon: 'error'
       });
     }

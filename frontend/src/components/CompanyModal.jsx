@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { X, Loader2, Building, FileText, Phone, Mail, User } from 'lucide-react';
 import api from '../services/api';
 import { showDialog } from '../utils/alert';
+import { parseApiError } from '../utils/parseApiError';
 
 export default function CompanyModal({ isOpen, onClose, company, onSuccess }) {
   const [isVisible, setIsVisible] = useState(false);
@@ -66,8 +67,7 @@ export default function CompanyModal({ isOpen, onClose, company, onSuccess }) {
 
     } catch (error) {
       console.error(error);
-      const errorMsg = error.response?.data?.detail || 'Ocorreu um erro ao salvar.';
-      showDialog({ title: 'Erro', text: errorMsg, icon: 'error' });
+      showDialog({ title: 'Erro', text: parseApiError(error, 'Ocorreu um erro ao salvar.'), icon: 'error' });
     }
   };
 

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 from sqlalchemy.orm import Session
 from app.schemas.schemas import UserResponse, UserUpdate
@@ -40,6 +40,6 @@ def update_user(
     
     updated_user = usersCrud.update_user(db, user_id=user_id, user_update=user_update)
     if updated_user is None:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
         
     return updated_user

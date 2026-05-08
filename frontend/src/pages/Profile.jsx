@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import { showDialog } from '../utils/alert';
+import { parseApiError } from '../utils/parseApiError';
 
 export default function Profile() {
   const { user } = useAuth();
@@ -61,7 +62,7 @@ export default function Profile() {
       console.error(error);
       showDialog({
         title: 'Erro',
-        text: 'Não foi possível salvar as alterações.',
+        text: parseApiError(error, 'Não foi possível salvar as alterações.'),
         icon: 'error'
       });
     }
