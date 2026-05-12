@@ -74,7 +74,7 @@ export default function AttendanceReport() {
     if (reportData.length === 0) return;
 
     const formattedData = reportData.map(item => ({
-      'Data': new Date(item.date).toLocaleDateString('pt-BR'),
+      'Data': new Date(item.date + 'T00:00:00').toLocaleDateString('pt-BR'),
       'Empresa': item.company_name,
       'Colaborador': item.employee_name,
       'Turno': item.shift_time,
@@ -155,7 +155,7 @@ export default function AttendanceReport() {
                 reportData.map((item, index) => (
                   <tr key={index} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(item.date).toLocaleDateString('pt-BR')}
+                      {new Date(item.date + 'T00:00:00').toLocaleDateString('pt-BR')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.company_name}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.employee_name}</td>

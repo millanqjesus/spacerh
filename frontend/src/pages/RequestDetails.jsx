@@ -116,7 +116,7 @@ export default function RequestDetails() {
             <div className="flex items-center gap-2 text-gray-500 mt-1">
               <Calendar size={16} />
               <span className="font-medium">
-                {new Date(request.request_date).toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                {new Date(request.request_date + 'T00:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
               </span>
             </div>
           </div>

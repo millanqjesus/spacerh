@@ -230,7 +230,7 @@ export default function Requests() {
                   <div className="flex items-center gap-2">
                     <Calendar size={16} className="text-gray-400" />
                     <span className="font-medium text-gray-900">
-                      {new Date(req.request_date).toLocaleDateString('pt-BR', { dateStyle: 'long' })}
+                      {new Date(req.request_date + 'T00:00:00').toLocaleDateString('pt-BR', { dateStyle: 'long' })}
                     </span>
                   </div>
 
