@@ -58,11 +58,12 @@ export default function Login() {
         {/* Encabezado con Logo */}
         <div className="bg-space-orange/10 p-8 text-center">
           <img
-            src="https://www.spacerh.com.br/ws/media-library/28076a3924164c9b9313f5d88d389e6b/wwwwwww.png"
-            alt="Space Logo"
+            // src="https://www.spacerh.com.br/ws/media-library/28076a3924164c9b9313f5d88d389e6b/wwwwwww.png"
+            src="/EquipeFlex3.png"
+            alt="EquipeFlex Logo"
             className="h-12 mx-auto mb-4"
           />
-          <h2 className="text-2xl font-bold text-gray-800">Bem-vindo à SPACE</h2>
+          <h2 className="text-2xl font-bold text-gray-800">Bem-vindo à EquipeFlex</h2>
           <p className="text-gray-500 text-sm mt-2">Faça login para gerenciar sua conta</p>
         </div>
 

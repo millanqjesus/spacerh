@@ -75,7 +75,7 @@ export default function Header() {
             <img
               // src="https://www.spacerh.com.br/ws/media-library/28076a3924164c9b9313f5d88d389e6b/wwwwwww.png"
               src="/EquipeFlex3.png"
-              alt="Space Logo"
+              alt="EquipeFlex Logo"
               className="h-14 w-auto"
             />
           </Link>
