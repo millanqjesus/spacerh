@@ -73,9 +73,10 @@ export default function Header() {
         <div className="flex items-center gap-8">
           <Link to="/dashboard" className="flex items-center gap-2">
             <img
-              src="https://www.spacerh.com.br/ws/media-library/28076a3924164c9b9313f5d88d389e6b/wwwwwww.png"
+              // src="https://www.spacerh.com.br/ws/media-library/28076a3924164c9b9313f5d88d389e6b/wwwwwww.png"
+              src="/EquipeFlex3.png"
               alt="Space Logo"
-              className="h-8 w-auto"
+              className="h-14 w-auto"
             />
           </Link>
 

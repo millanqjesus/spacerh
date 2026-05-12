@@ -9,7 +9,7 @@ export default function Footer() {
 
         {/* Izquierda: Copyright */}
         <div className="text-sm text-center md:text-left">
-          <span className="font-semibold text-space-orange">SPACE</span> &copy; {currentYear}.
+          <span className="font-semibold text-space-orange">EquipeFlex</span> &copy; {currentYear}.
           Todos os direitos reservados.
         </div>
 
