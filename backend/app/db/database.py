@@ -5,7 +5,8 @@ from sqlalchemy.orm import sessionmaker
 # ⚠️ IMPORTANTE: Ajusta estos datos según tu contenedor Docker
 # Formato: postgresql://usuario:password@host:puerto/nombre_base_datos
 # Si tu docker corre en local, el host suele ser "localhost"
-SQLALCHEMY_DATABASE_URL = "postgresql://root:.Clent4321.@127.0.0.1:5432/space_new"
+# SQLALCHEMY_DATABASE_URL = "postgresql://usr_space:miclave@127.0.0.1:58322/db_space?options=-csearch_path%3Dauth,business,public"
+SQLALCHEMY_DATABASE_URL = "postgresql://root:.Clent4321.@127.0.0.1:5432/space_new?options=-csearch_path%3Dauth,business,public"
 
 # Creamos el motor de conexión
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
