@@ -9,6 +9,8 @@ app = FastAPI(title="Backend Profesional")
 origins = [
     "http://localhost:5173",    # El puerto por defecto de Vite
     "http://127.0.0.1:5173",    # Alternativa local
+    "https://equipeflex.softwaresavi.com",
+    "http://equipeflex.softwaresavi.com",
 ]
 
 app.add_middleware(
