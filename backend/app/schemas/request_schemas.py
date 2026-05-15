@@ -14,6 +14,7 @@ class EmployeeSimple(BaseModel):
 class PaymentReportItem(BaseModel):
     employee_code: Optional[str] = None
     employee_name: str
+    shift_count: int
     total_amount: float
 
 class AttendanceReportItem(BaseModel):

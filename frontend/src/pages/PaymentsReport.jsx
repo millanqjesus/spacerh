@@ -84,6 +84,7 @@ export default function PaymentsReport() {
     const formattedData = reportData.map((item) => ({
       'Código': item.employee_code || '—',
       'Nome Completo': item.employee_name,
+      'Qtdd': item.shift_count,
       'Valor a Pagar (R$)': item.total_amount
     }));
 
@@ -140,6 +141,7 @@ export default function PaymentsReport() {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome Completo</th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Qtdd</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor a Pagar</th>
               </tr>
             </thead>
@@ -151,6 +153,9 @@ export default function PaymentsReport() {
                       {item.employee_code || '—'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.employee_name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center font-semibold text-gray-700">
+                      {item.shift_count}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">
                       R$ {item.total_amount.toFixed(2)}
                     </td>
@@ -158,7 +163,7 @@ export default function PaymentsReport() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="3" className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan="4" className="px-6 py-12 text-center text-gray-500">
                     {loading ? 'Carregando...' : 'Nenhum pagamento encontrado. Selecione os filtros para buscar.'}
                   </td>
                 </tr>
