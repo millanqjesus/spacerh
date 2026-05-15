@@ -81,8 +81,8 @@ export default function PaymentsReport() {
   const exportToExcel = () => {
     if (reportData.length === 0) return;
 
-    const formattedData = reportData.map((item, index) => ({
-      '#': index + 1,
+    const formattedData = reportData.map((item) => ({
+      'Código': item.employee_code || '—',
       'Colaborador': item.employee_name,
       'Valor a Pagar (R$)': item.total_amount
     }));
@@ -138,17 +138,17 @@ export default function PaymentsReport() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Colaborador</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor a Pagar</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {pagination.paginatedItems.length > 0 ? (
-                pagination.paginatedItems.map((item, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">
-                      {pagination.startIndex + index + 1}
+                pagination.paginatedItems.map((item) => (
+                  <tr key={item.employee_code || item.employee_name} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono font-medium">
+                      {item.employee_code || '—'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.employee_name}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">

@@ -12,6 +12,7 @@ class EmployeeSimple(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class PaymentReportItem(BaseModel):
+    employee_code: Optional[str] = None
     employee_name: str
     total_amount: float
 

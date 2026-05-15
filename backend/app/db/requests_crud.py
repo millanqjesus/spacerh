@@ -23,6 +23,7 @@ def get_payments_report(db: Session, start_date, end_date, company_id: int = Non
     )
     
     query = db.query(
+        User.code,
         User.first_name,
         User.last_name,
         func.sum(amount_expr).label("total_amount")
@@ -43,13 +44,14 @@ def get_payments_report(db: Session, start_date, end_date, company_id: int = Non
     if role == "contratado" and user_id:
         query = query.filter(ShiftAssignment.employee_id == user_id)
         
-    query = query.group_by(User.id, User.first_name, User.last_name)\
+    query = query.group_by(User.id, User.code, User.first_name, User.last_name)\
                  .order_by(User.first_name, User.last_name)
                  
     results = query.all()
     
     return [
         {
+            "employee_code": r.code,
             "employee_name": f"{r.first_name} {r.last_name}",
             "total_amount": float(r.total_amount or 0)
         }
