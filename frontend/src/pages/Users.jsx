@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import {
   Plus, Pencil, Loader2, Shield, ShieldAlert,
-  User as UserIcon, Search, ChevronLeft, ChevronRight,
+  User as UserIcon, Search,
   Filter, Key
 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import UserModal from '../components/UserModal';
+import Pagination from '../components/Pagination';
+import usePagination from '../hooks/usePagination';
 import { showDialog } from '../utils/alert';
 
 export default function Users() {
@@ -16,7 +18,7 @@ export default function Users() {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Estados de Modales
+  // Estados dos Modais
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
@@ -28,6 +30,9 @@ export default function Users() {
     fetchUsers();
   }, []);
 
+  // Paginação: 10 registros por página
+  const pagination = usePagination(filteredUsers, 10);
+
   useEffect(() => {
     const lowerTerm = searchTerm.toLowerCase();
     const results = users.filter(user =>
@@ -37,6 +42,7 @@ export default function Users() {
       user.cpf.includes(lowerTerm)
     );
     setFilteredUsers(results);
+    pagination.resetPage();
   }, [searchTerm, users]);
 
   const fetchUsers = async () => {
@@ -64,7 +70,7 @@ export default function Users() {
     }
   };
 
-  // Se eliminó la función handleDelete por solicitud del usuario
+  // Função handleDelete removida a pedido do usuário
 
   // UI Helpers
   const openUserModal = (user = null) => {
@@ -143,8 +149,8 @@ export default function Users() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filteredUsers.length > 0 ? (
-                  filteredUsers.map((user) => (
+                {pagination.paginatedItems.length > 0 ? (
+                  pagination.paginatedItems.map((user) => (
                     <tr key={user.id} className="hover:bg-gray-50 transition-colors group">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-4">
@@ -192,7 +198,7 @@ export default function Users() {
                             </button>
                           )}
 
-                          {/* Botón Password */}
+                          {/* Botão Senha */}
                           <button
                             onClick={() => openPasswordModal(user)}
                             className="p-2 text-amber-500 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-colors"
@@ -209,7 +215,7 @@ export default function Users() {
                             <Pencil size={18} />
                           </button>
 
-                          {/* Botón Eliminar REMOVIDO */}
+                          {/* Botão Excluir REMOVIDO */}
                         </div>
                       </td>
                     </tr>
@@ -228,20 +234,8 @@ export default function Users() {
               </tbody>
             </table>
 
-            {/* Paginación Visual */}
-            <div className="bg-white px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-              <span className="text-sm text-gray-700">
-                Mostrando <span className="font-medium">1</span> a <span className="font-medium">{filteredUsers.length}</span> de <span className="font-medium">{users.length}</span> resultados
-              </span>
-              <div className="flex gap-1">
-                <button className="p-1 rounded hover:bg-gray-100 disabled:opacity-50" disabled>
-                  <ChevronLeft size={20} className="text-gray-500" />
-                </button>
-                <button className="p-1 rounded hover:bg-gray-100 disabled:opacity-50" disabled>
-                  <ChevronRight size={20} className="text-gray-500" />
-                </button>
-              </div>
-            </div>
+            {/* Paginação */}
+            <Pagination {...pagination} />
           </div>
         )}
       </div>
