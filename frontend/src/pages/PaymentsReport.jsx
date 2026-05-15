@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
-import { FileText, Download, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FileText, Download } from 'lucide-react';
 import api from '../services/api';
 import DateCompanyFilter from '../components/DateCompanyFilter';
+import Pagination from '../components/Pagination';
+import usePagination from '../hooks/usePagination';
 import * as XLSX from 'xlsx';
 import { showDialog } from '../utils/alert';
 
@@ -20,6 +22,9 @@ export default function PaymentsReport() {
   });
   const [reportData, setReportData] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // Paginação: 10 registros por página
+  const pagination = usePagination(reportData, 10);
 
   useEffect(() => {
     fetchCompanies();
@@ -46,6 +51,7 @@ export default function PaymentsReport() {
       };
       const response = await api.get('/daily-requests/report/payments', { params });
       setReportData(response.data);
+      pagination.resetPage();
       if (response.data.length === 0) {
         showDialog({ title: 'Sem resultados', text: 'Nenhum registro encontrado para o período selecionado.', icon: 'info' });
       }
@@ -138,11 +144,11 @@ export default function PaymentsReport() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {reportData.length > 0 ? (
-                reportData.map((item, index) => (
+              {pagination.paginatedItems.length > 0 ? (
+                pagination.paginatedItems.map((item, index) => (
                   <tr key={index} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">
-                      {index + 1}
+                      {pagination.startIndex + index + 1}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.employee_name}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">
@@ -160,20 +166,8 @@ export default function PaymentsReport() {
             </tbody>
           </table>
 
-          {/* Paginación Visual */}
-          <div className="bg-white px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-            <span className="text-sm text-gray-700">
-              Mostrando <span className="font-medium">1</span> a <span className="font-medium">{reportData.length}</span> de <span className="font-medium">{reportData.length}</span> resultados
-            </span>
-            <div className="flex gap-1">
-              <button className="p-1 rounded hover:bg-gray-100 disabled:opacity-50" disabled>
-                <ChevronLeft size={20} className="text-gray-500" />
-              </button>
-              <button className="p-1 rounded hover:bg-gray-100 disabled:opacity-50" disabled>
-                <ChevronRight size={20} className="text-gray-500" />
-              </button>
-            </div>
-          </div>
+          {/* Paginação */}
+          <Pagination {...pagination} />
         </div>
       </div>
     </div>
