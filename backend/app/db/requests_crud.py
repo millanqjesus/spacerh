@@ -26,6 +26,7 @@ def get_payments_report(db: Session, start_date, end_date, company_id: int = Non
         User.code,
         User.first_name,
         User.last_name,
+        User.pix,
         func.count(ShiftAssignment.id).label("shift_count"),
         func.sum(amount_expr).label("total_amount")
     ).join(ShiftAssignment, ShiftAssignment.employee_id == User.id)\
@@ -45,7 +46,7 @@ def get_payments_report(db: Session, start_date, end_date, company_id: int = Non
     if role == "contratado" and user_id:
         query = query.filter(ShiftAssignment.employee_id == user_id)
         
-    query = query.group_by(User.id, User.code, User.first_name, User.last_name)\
+    query = query.group_by(User.id, User.code, User.first_name, User.last_name, User.pix)\
                  .order_by(User.first_name, User.last_name)
                  
     results = query.all()
@@ -55,7 +56,8 @@ def get_payments_report(db: Session, start_date, end_date, company_id: int = Non
             "employee_code": r.code,
             "employee_name": f"{r.first_name} {r.last_name}",
             "shift_count": r.shift_count,
-            "total_amount": float(r.total_amount or 0)
+            "total_amount": float(r.total_amount or 0),
+            "employee_pix": r.pix
         }
         for r in results
     ]
