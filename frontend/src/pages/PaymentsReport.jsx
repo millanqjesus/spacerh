@@ -85,7 +85,7 @@ export default function PaymentsReport() {
       'Código': item.employee_code || '—',
       'Nome Completo': item.employee_name,
       'Qtdd': item.shift_count,
-      'Valor a Pagar (R$)': item.total_amount
+      'Total (R$)': item.total_amount
     }));
 
     const ws = XLSX.utils.json_to_sheet(formattedData);
@@ -142,7 +142,7 @@ export default function PaymentsReport() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome Completo</th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Qtdd</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor a Pagar</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
