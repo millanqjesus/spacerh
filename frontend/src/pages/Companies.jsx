@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Plus, Pencil, Search, Loader2, Building, Filter, Phone, Mail, User, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Pencil, Search, Loader2, Building, Filter, Phone, Mail, User } from 'lucide-react';
 import api from '../services/api';
 import CompanyModal from '../components/CompanyModal';
+import Pagination from '../components/Pagination';
+import usePagination from '../hooks/usePagination';
 import { showDialog } from '../utils/alert';
 
 export default function Companies() {
@@ -17,6 +19,9 @@ export default function Companies() {
     fetchCompanies();
   }, []);
 
+  // Paginação: 10 registros por página
+  const pagination = usePagination(filteredCompanies, 10);
+
   useEffect(() => {
     const lowerTerm = searchTerm.toLowerCase();
     const results = companies.filter(company =>
@@ -25,6 +30,7 @@ export default function Companies() {
       (company.contact_person && company.contact_person.toLowerCase().includes(lowerTerm))
     );
     setFilteredCompanies(results);
+    pagination.resetPage();
   }, [searchTerm, companies]);
 
   const fetchCompanies = async () => {
@@ -97,8 +103,8 @@ export default function Companies() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filteredCompanies.length > 0 ? (
-                  filteredCompanies.map((company) => (
+                {pagination.paginatedItems.length > 0 ? (
+                  pagination.paginatedItems.map((company) => (
                     <tr key={company.id} className="hover:bg-gray-50 transition-colors group">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-4">
@@ -142,20 +148,8 @@ export default function Companies() {
               </tbody>
             </table>
 
-            {/* Paginación Visual */}
-            <div className="bg-white px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-              <span className="text-sm text-gray-700">
-                Mostrando <span className="font-medium">1</span> a <span className="font-medium">{filteredCompanies.length}</span> de <span className="font-medium">{companies.length}</span> resultados
-              </span>
-              <div className="flex gap-1">
-                <button className="p-1 rounded hover:bg-gray-100 disabled:opacity-50" disabled>
-                  <ChevronLeft size={20} className="text-gray-500" />
-                </button>
-                <button className="p-1 rounded hover:bg-gray-100 disabled:opacity-50" disabled>
-                  <ChevronRight size={20} className="text-gray-500" />
-                </button>
-              </div>
-            </div>
+            {/* Paginação */}
+            <Pagination {...pagination} />
           </div>
         )}
       </div>
