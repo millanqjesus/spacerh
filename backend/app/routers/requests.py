@@ -29,7 +29,9 @@ def read_daily_requests(
         limit=limit, 
         company_id=company_id,
         start_date=start_date,
-        end_date=end_date
+        end_date=end_date,
+        user_id=current_user.id,
+        role=current_user.role
     )
 
 @router.get("/{request_id}", response_model=DailyRequestResponse)
@@ -132,7 +134,14 @@ def get_payments_report(
     Genera un reporte de pagos para empleados 'PRESENTE'.
     Fechas deben ser YYYY-MM-DD.
     """
-    return requests_crud.get_payments_report(db=db, start_date=start_date, end_date=end_date, company_id=company_id)
+    return requests_crud.get_payments_report(
+        db=db, 
+        start_date=start_date, 
+        end_date=end_date, 
+        company_id=company_id,
+        user_id=current_user.id,
+        role=current_user.role
+    )
 
 @router.get("/report/attendance", response_model=List[AttendanceReportItem])
 def get_attendance_report(
@@ -145,7 +154,14 @@ def get_attendance_report(
     """
     Genera un reporte detallado de asistencia (por registro).
     """
-    return requests_crud.get_attendance_report(db=db, start_date=start_date, end_date=end_date, company_id=company_id)
+    return requests_crud.get_attendance_report(
+        db=db, 
+        start_date=start_date, 
+        end_date=end_date, 
+        company_id=company_id,
+        user_id=current_user.id,
+        role=current_user.role
+    )
 
 @router.get("/stats/dashboard", response_model=List[DashboardStatsItem])
 def get_dashboard_stats(
@@ -158,7 +174,14 @@ def get_dashboard_stats(
     """
     Retorna estadísticas para el dashboard (cantidad de solicitudes por empresa).
     """
-    return requests_crud.get_dashboard_stats(db=db, start_date=start_date, end_date=end_date, company_id=company_id)
+    return requests_crud.get_dashboard_stats(
+        db=db, 
+        start_date=start_date, 
+        end_date=end_date, 
+        company_id=company_id,
+        user_id=current_user.id,
+        role=current_user.role
+    )
 
 @router.get("/stats/attendance", response_model=List[AttendanceStatsItem])
 def get_attendance_stats(
@@ -171,6 +194,13 @@ def get_attendance_stats(
     """
     Retorna estadísticas de asistencia (conteo por status).
     """
-    return requests_crud.get_attendance_stats(db=db, start_date=start_date, end_date=end_date, company_id=company_id)
+    return requests_crud.get_attendance_stats(
+        db=db, 
+        start_date=start_date, 
+        end_date=end_date, 
+        company_id=company_id,
+        user_id=current_user.id,
+        role=current_user.role
+    )
 
 

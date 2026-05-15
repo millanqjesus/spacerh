@@ -3,7 +3,6 @@ from sqlalchemy import desc, and_
 from app.models.models import DailyRequest, WorkShift, ShiftAssignment, User, Company
 from app.schemas.request_schemas import DailyRequestCreate, ShiftAssignmentCreate
 
-# ... (get_daily_request y demas funciones de lectura se mantienen igual) ...
 def get_daily_request(db: Session, request_id: int):
     return db.query(DailyRequest).options(
         joinedload(DailyRequest.shifts)
@@ -13,8 +12,11 @@ def get_daily_request(db: Session, request_id: int):
 
 from sqlalchemy.sql import func, case
 
-def get_payments_report(db: Session, start_date, end_date, company_id: int = None):
-    # Calcular el monto final considerando descuentos si aplica
+def _get_employee_filter(user_id: int):
+    """Helper para obtener filtro de empleado logueado."""
+    return ShiftAssignment.employee_id == user_id
+
+def get_payments_report(db: Session, start_date, end_date, company_id: int = None, user_id: int = None, role: str = None):
     amount_expr = case(
         (WorkShift.has_discount == True, WorkShift.payment_amount * (1 - WorkShift.discount_percentage / 100.0)),
         else_=WorkShift.payment_amount
@@ -37,8 +39,10 @@ def get_payments_report(db: Session, start_date, end_date, company_id: int = Non
     
     if company_id:
         query = query.filter(DailyRequest.company_id == company_id)
+    
+    if role == "contratado" and user_id:
+        query = query.filter(ShiftAssignment.employee_id == user_id)
         
-    # Agrupar por colaborador
     query = query.group_by(User.id, User.first_name, User.last_name)\
                  .order_by(User.first_name, User.last_name)
                  
@@ -52,8 +56,7 @@ def get_payments_report(db: Session, start_date, end_date, company_id: int = Non
         for r in results
     ]
 
-def get_attendance_report(db: Session, start_date, end_date, company_id: int = None):
-    # Calcular monto individual (con descuento si aplica) para mostrar en el reporte detallado
+def get_attendance_report(db: Session, start_date, end_date, company_id: int = None, user_id: int = None, role: str = None):
     amount_expr = case(
         (WorkShift.has_discount == True, WorkShift.payment_amount * (1 - WorkShift.discount_percentage / 100.0)),
         else_=WorkShift.payment_amount
@@ -81,6 +84,9 @@ def get_attendance_report(db: Session, start_date, end_date, company_id: int = N
     
     if company_id:
         query = query.filter(DailyRequest.company_id == company_id)
+    
+    if role == "contratado" and user_id:
+        query = query.filter(ShiftAssignment.employee_id == user_id)
         
     query = query.order_by(DailyRequest.request_date, User.first_name)
     results = query.all()
@@ -97,7 +103,7 @@ def get_attendance_report(db: Session, start_date, end_date, company_id: int = N
         for r in results
     ]
 
-def get_dashboard_stats(db: Session, start_date, end_date, company_id: int = None):
+def get_dashboard_stats(db: Session, start_date, end_date, company_id: int = None, user_id: int = None, role: str = None):
     query = db.query(
         Company.name.label("company_name"),
         func.count(DailyRequest.id).label("request_count")
@@ -111,6 +117,11 @@ def get_dashboard_stats(db: Session, start_date, end_date, company_id: int = Non
     
     if company_id:
         query = query.filter(DailyRequest.company_id == company_id)
+    
+    if role == "contratado" and user_id:
+        query = query.join(WorkShift, WorkShift.request_id == DailyRequest.id)\
+                     .join(ShiftAssignment, ShiftAssignment.shift_id == WorkShift.id)\
+                     .filter(ShiftAssignment.employee_id == user_id)
         
     query = query.group_by(Company.name).order_by(Company.name)
     results = query.all()
@@ -123,7 +134,7 @@ def get_dashboard_stats(db: Session, start_date, end_date, company_id: int = Non
         for r in results
     ]
 
-def get_attendance_stats(db: Session, start_date, end_date, company_id: int = None):
+def get_attendance_stats(db: Session, start_date, end_date, company_id: int = None, user_id: int = None, role: str = None):
     query = db.query(
         Company.name.label("company_name"),
         ShiftAssignment.status,
@@ -140,6 +151,9 @@ def get_attendance_stats(db: Session, start_date, end_date, company_id: int = No
     
     if company_id:
         query = query.filter(DailyRequest.company_id == company_id)
+    
+    if role == "contratado" and user_id:
+        query = query.filter(ShiftAssignment.employee_id == user_id)
         
     query = query.group_by(Company.name, ShiftAssignment.status).order_by(Company.name)
     results = query.all()
@@ -157,7 +171,7 @@ def get_attendance_stats(db: Session, start_date, end_date, company_id: int = No
 
 
 
-def get_daily_requests(db: Session, skip: int = 0, limit: int = 100, company_id: int = None, start_date: str = None, end_date: str = None):
+def get_daily_requests(db: Session, skip: int = 0, limit: int = 100, company_id: int = None, start_date: str = None, end_date: str = None, user_id: int = None, role: str = None):
     query = db.query(DailyRequest)
     if company_id:
         query = query.filter(DailyRequest.company_id == company_id)
@@ -165,6 +179,13 @@ def get_daily_requests(db: Session, skip: int = 0, limit: int = 100, company_id:
         query = query.filter(DailyRequest.request_date >= start_date)
     if end_date:
         query = query.filter(DailyRequest.request_date <= end_date)
+    
+    if role == "contratado" and user_id:
+        query = query.join(WorkShift, WorkShift.request_id == DailyRequest.id)\
+                     .join(ShiftAssignment, ShiftAssignment.shift_id == WorkShift.id)\
+                     .filter(ShiftAssignment.employee_id == user_id)\
+                     .distinct()
+    
     return query.order_by(desc(DailyRequest.request_date)).offset(skip).limit(limit).all()
 
 def create_daily_request(db: Session, request: DailyRequestCreate, user_id: int):
