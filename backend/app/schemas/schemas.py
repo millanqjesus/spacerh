@@ -18,9 +18,8 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=6, description="Password robusto")
     role: Optional[UserRole] = UserRole.CONTRATADO
-
-    # Opcional: Podrías permitir crear admins directamente, 
-    # pero por seguridad lo dejamos fuera por ahora (default será user en DB)
+    code: Optional[str] = Field(None, max_length=50)
+    pix: Optional[str] = Field(None, max_length=255)
 
     @field_validator('password')
     @classmethod
@@ -43,9 +42,11 @@ class UserUpdate(BaseModel):
     last_name: Optional[str] = None
     cpf: Optional[str] = None
     email: Optional[EmailStr] = None
-    password: Optional[str] = None # Opcional: Solo si quiere cambiarla
+    password: Optional[str] = None
     role: Optional[UserRole] = None
     is_active: Optional[bool] = None
+    code: Optional[str] = Field(None, max_length=50)
+    pix: Optional[str] = Field(None, max_length=255)
 
 # --- CLASE DE SALIDA ---
 class UserResponse(BaseModel):
@@ -56,6 +57,8 @@ class UserResponse(BaseModel):
     cpf: str
     is_active: bool
     role: str
+    code: Optional[str] = None
+    pix: Optional[str] = None
     created_at: datetime
     
     model_config = ConfigDict(from_attributes=True)

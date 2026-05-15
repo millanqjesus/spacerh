@@ -17,21 +17,23 @@ export default function UserModal({ isOpen, onClose, user, onSuccess }) {
       setShowPassword(false);
 
       if (user) {
-        // Modo Edición: Cargar datos existentes
         setValue('first_name', user.first_name);
         setValue('last_name', user.last_name);
         setValue('email', user.email);
         setValue('cpf', user.cpf);
         setValue('role', user.role);
+        setValue('code', user.code || '');
+        setValue('pix', user.pix || '');
       } else {
-        // Modo Creación: Establecer valores por defecto
         reset({
-          role: 'contratado', // Valor por defecto seguro
+          role: 'contratado',
           first_name: '',
           last_name: '',
           email: '',
           cpf: '',
-          password: ''
+          password: '',
+          code: '',
+          pix: ''
         });
       }
       return () => clearTimeout(timer);
@@ -108,7 +110,7 @@ export default function UserModal({ isOpen, onClose, user, onSuccess }) {
         onClick={handleClose}
       ></div>
 
-      <div className={`relative bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden transform transition-all duration-300 ease-out ${isVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'}`}>
+      <div className={`relative bg-white rounded-2xl shadow-xl w-[80vw] max-w-5xl overflow-hidden transform transition-all duration-300 ease-out ${isVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'}`}>
         <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
           <h3 className="font-bold text-lg text-gray-800">
             {user ? 'Editar Usuário' : 'Novo Usuário'}
@@ -119,7 +121,7 @@ export default function UserModal({ isOpen, onClose, user, onSuccess }) {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
               <input {...register('first_name', { required: true })} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-space-orange/20 focus:border-space-orange outline-none transition-all" placeholder="João" />
@@ -128,47 +130,66 @@ export default function UserModal({ isOpen, onClose, user, onSuccess }) {
               <label className="block text-sm font-medium text-gray-700 mb-1">Sobrenome</label>
               <input {...register('last_name', { required: true })} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-space-orange/20 focus:border-space-orange outline-none transition-all" placeholder="Silva" />
             </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">CPF</label>
-            <input {...register('cpf', { required: true })} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-space-orange/20 focus:border-space-orange outline-none transition-all" placeholder="000.000.000-00" />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
-            <input type="email" {...register('email', { required: true })} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-space-orange/20 focus:border-space-orange outline-none transition-all" placeholder="email@exemplo.com" />
-          </div>
-
-          {!user && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Senha Provisória</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  {...register('password', { required: !user, minLength: 6 })}
-                  className="w-full p-2.5 border border-gray-300 rounded-lg pr-10 focus:ring-2 focus:ring-space-orange/20 focus:border-space-orange outline-none transition-all"
-                  placeholder="******"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
-                >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">Mínimo 6 caracteres.</p>
+              <label className="block text-sm font-medium text-gray-700 mb-1">CPF</label>
+              <input {...register('cpf', { required: true })} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-space-orange/20 focus:border-space-orange outline-none transition-all" placeholder="000.000.000-00" />
             </div>
-          )}
+          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Função (Role)</label>
-            <select {...register('role')} className="w-full p-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-space-orange/20 focus:border-space-orange outline-none transition-all">
-              <option value="contratado">CONTRATADO</option>
-              <option value="lider">LIDER</option>
-              <option value="admin">ADMIN</option>
-            </select>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+              <input type="email" {...register('email', { required: true })} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-space-orange/20 focus:border-space-orange outline-none transition-all" placeholder="email@exemplo.com" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Função (Role)</label>
+              <select {...register('role')} className="w-full p-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-space-orange/20 focus:border-space-orange outline-none transition-all">
+                <option value="contratado">CONTRATADO</option>
+                <option value="lider">LIDER</option>
+                <option value="admin">ADMIN</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Código</label>
+              <input
+                {...register('code')}
+                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-space-orange/20 focus:border-space-orange outline-none transition-all"
+                placeholder="Código interno"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">PIX</label>
+              <input
+                {...register('pix')}
+                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-space-orange/20 focus:border-space-orange outline-none transition-all"
+                placeholder="Chave PIX"
+              />
+            </div>
+            {!user && (
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Senha Provisória</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    {...register('password', { required: !user, minLength: 6 })}
+                    className="w-full p-2.5 border border-gray-300 rounded-lg pr-10 focus:ring-2 focus:ring-space-orange/20 focus:border-space-orange outline-none transition-all"
+                    placeholder="******"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Mínimo 6 caracteres.</p>
+              </div>
+            )}
+            {user && <div className="col-span-2" />}
           </div>
 
           <div className="pt-4 flex gap-3 justify-end border-t border-gray-100 mt-6">

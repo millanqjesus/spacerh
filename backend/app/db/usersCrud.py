@@ -27,26 +27,22 @@ def get_users(db: Session, skip: int = 0, limit: int = 100):
 
 def create_user(db: Session, user: UserCreate):
     """Crea un nuevo usuario en la BD"""
-    
-    # 1. Hashear el password
     hashed_password = get_password_hash(user.password)
     
-    # 2. Crear instancia del modelo DB
-    # Mapeamos los campos del schema (Pydantic) al modelo (SQLAlchemy)
     db_user = User(
         email=user.email,
         hashed_password=hashed_password,
         first_name=user.first_name,
         last_name=user.last_name,
         cpf=user.cpf,
-        role=user.role.value if user.role else "contratado"
-        # created_at, updated_at, is_active y id se llenan solos por la DB
+        role=user.role.value if user.role else "contratado",
+        code=user.code,
+        pix=user.pix
     )
     
-    # 3. Guardar en DB
     db.add(db_user)
     db.commit()
-    db.refresh(db_user) # Recargar para obtener el ID generado y fechas
+    db.refresh(db_user)
 
     return db_user
 
