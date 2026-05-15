@@ -85,6 +85,7 @@ export default function PaymentsReport() {
       'Código': item.employee_code || '—',
       'Nome Completo': item.employee_name,
       'Qtdd': item.shift_count,
+      'Valor (R$)': item.avg_payment,
       'Total (R$)': item.total_amount,
       'Pix': item.employee_pix || '—'
     }));
@@ -143,6 +144,7 @@ export default function PaymentsReport() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome Completo</th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Qtdd</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pix</th>
               </tr>
@@ -158,6 +160,9 @@ export default function PaymentsReport() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-center font-semibold text-gray-700">
                       {item.shift_count}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      R$ {item.avg_payment.toFixed(2)}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">
                       R$ {item.total_amount.toFixed(2)}
                     </td>
@@ -168,7 +173,7 @@ export default function PaymentsReport() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5" className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
                     {loading ? 'Carregando...' : 'Nenhum pagamento encontrado. Selecione os filtros para buscar.'}
                   </td>
                 </tr>

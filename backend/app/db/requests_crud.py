@@ -28,6 +28,7 @@ def get_payments_report(db: Session, start_date, end_date, company_id: int = Non
         User.last_name,
         User.pix,
         func.count(ShiftAssignment.id).label("shift_count"),
+        func.avg(WorkShift.payment_amount).label("avg_payment"),
         func.sum(amount_expr).label("total_amount")
     ).join(ShiftAssignment, ShiftAssignment.employee_id == User.id)\
      .join(WorkShift, WorkShift.id == ShiftAssignment.shift_id)\
@@ -56,6 +57,7 @@ def get_payments_report(db: Session, start_date, end_date, company_id: int = Non
             "employee_code": r.code,
             "employee_name": f"{r.first_name} {r.last_name}",
             "shift_count": r.shift_count,
+            "avg_payment": round(float(r.avg_payment or 0), 2),
             "total_amount": float(r.total_amount or 0),
             "employee_pix": r.pix
         }

@@ -15,6 +15,7 @@ class PaymentReportItem(BaseModel):
     employee_code: Optional[str] = None
     employee_name: str
     shift_count: int
+    avg_payment: float
     total_amount: float
     employee_pix: Optional[str] = None
 
