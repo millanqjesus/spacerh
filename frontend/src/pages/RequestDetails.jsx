@@ -99,7 +99,7 @@ export default function RequestDetails() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <button
-        onClick={() => navigate('/requests')}
+        onClick={() => navigate(-1)}
         className="flex items-center text-gray-500 hover:text-space-orange transition-colors mb-2"
       >
         <ArrowLeft size={20} className="mr-1" /> Voltar para lista

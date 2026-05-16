@@ -7,26 +7,27 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import RequestModal from '../components/RequestModal';
 import DateCompanyFilter from '../components/DateCompanyFilter';
+import useFilterParams from '../hooks/useFilterParams';
 import { showDialog } from '../utils/alert';
 
 export default function Requests() {
   const [requests, setRequests] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Default dates: First day of current month to Last day of current month
+  // Filtros com persistência na URL (preserva ao navegar para detalhes e voltar)
   const today = new Date();
   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
   const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-  const [filters, setFilters] = useState({
+  const { filters, handleFilterChange } = useFilterParams({
     startDate: firstDay.toISOString().split('T')[0],
     endDate: lastDay.toISOString().split('T')[0],
     companyId: ''
   });
 
-  // Estado para el menú desplegable (3 puntitos)
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Estado para o menu suspenso (3 pontinhos)
   const [openMenuId, setOpenMenuId] = useState(null);
 
   const navigate = useNavigate();
@@ -59,10 +60,6 @@ export default function Requests() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleFilterChange = (e) => {
-    setFilters({ ...filters, [e.target.name]: e.target.value });
   };
 
   const handleSearch = (e) => {
