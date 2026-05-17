@@ -20,20 +20,23 @@ import { useSearchParams } from 'react-router-dom';
 export default function useFilterParams(defaultValues, paramMap = {}) {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Inicializar filtros: priorizar valores da URL, depois os defaults
+  // Inicializar filtros: priorizar valores da URL, depois localStorage, depois os defaults
   const getInitialFilters = () => {
+    const savedStr = localStorage.getItem('appGlobalFilters');
+    const savedFilters = savedStr ? JSON.parse(savedStr) : {};
+
     const initial = {};
     for (const key of Object.keys(defaultValues)) {
       const urlKey = paramMap[key] || key;
-      initial[key] = searchParams.get(urlKey) || defaultValues[key];
+      initial[key] = searchParams.get(urlKey) || savedFilters[key] || defaultValues[key];
     }
     return initial;
   };
 
   const [filters, setFiltersState] = useState(getInitialFilters);
 
-  // Sincroniza estado + URL
-  const syncToUrl = useCallback(
+  // Sincroniza estado + URL + LocalStorage
+  const syncToUrlAndStorage = useCallback(
     (newFilters) => {
       const params = {};
       for (const [key, value] of Object.entries(newFilters)) {
@@ -43,6 +46,12 @@ export default function useFilterParams(defaultValues, paramMap = {}) {
         }
       }
       setSearchParams(params, { replace: true });
+
+      // Persist to LocalStorage
+      const savedStr = localStorage.getItem('appGlobalFilters');
+      const savedFilters = savedStr ? JSON.parse(savedStr) : {};
+      const updatedFilters = { ...savedFilters, ...newFilters };
+      localStorage.setItem('appGlobalFilters', JSON.stringify(updatedFilters));
     },
     [defaultValues, paramMap, setSearchParams],
   );
@@ -51,11 +60,11 @@ export default function useFilterParams(defaultValues, paramMap = {}) {
     (updater) => {
       setFiltersState((prev) => {
         const next = typeof updater === 'function' ? updater(prev) : updater;
-        syncToUrl(next);
+        syncToUrlAndStorage(next);
         return next;
       });
     },
-    [syncToUrl],
+    [syncToUrlAndStorage],
   );
 
   /** Handler para inputs/selects controlados (usa e.target.name). */

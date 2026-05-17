@@ -5,6 +5,8 @@ import api from '../services/api';
 import DateCompanyFilter from '../components/DateCompanyFilter';
 import { showDialog } from '../utils/alert';
 
+import useFilterParams from '../hooks/useFilterParams';
+
 export default function Dashboard() {
   const [companies, setCompanies] = useState([]);
   const [stats, setStats] = useState([]);
@@ -16,7 +18,7 @@ export default function Dashboard() {
   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
   const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-  const [filters, setFilters] = useState({
+  const { filters, handleFilterChange } = useFilterParams({
     startDate: firstDay.toISOString().split('T')[0],
     endDate: lastDay.toISOString().split('T')[0],
     companyId: ''
@@ -82,10 +84,6 @@ export default function Dashboard() {
 
     return Object.values(grouped).sort((a, b) => a.company_name.localeCompare(b.company_name));
   }, [attendanceStats]);
-
-  const handleFilterChange = (e) => {
-    setFilters({ ...filters, [e.target.name]: e.target.value });
-  };
 
   const handleSearch = (e) => {
     e.preventDefault();
