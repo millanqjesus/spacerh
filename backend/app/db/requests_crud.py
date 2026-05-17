@@ -37,7 +37,8 @@ def get_payments_report(db: Session, start_date, end_date, company_id: int = Non
          and_(
              DailyRequest.request_date >= start_date,
              DailyRequest.request_date <= end_date,
-             ShiftAssignment.status == 'PRESENTE'
+             ShiftAssignment.status == 'PRESENTE',
+             DailyRequest.status != 'CANCELADA'
          )
      )
     
@@ -86,7 +87,8 @@ def get_attendance_report(db: Session, start_date, end_date, company_id: int = N
      .filter(
          and_(
              DailyRequest.request_date >= start_date,
-             DailyRequest.request_date <= end_date
+             DailyRequest.request_date <= end_date,
+             DailyRequest.status != 'CANCELADA'
          )
      )
     
@@ -119,7 +121,8 @@ def get_dashboard_stats(db: Session, start_date, end_date, company_id: int = Non
      .filter(
          and_(
              DailyRequest.request_date >= start_date,
-             DailyRequest.request_date <= end_date
+             DailyRequest.request_date <= end_date,
+             DailyRequest.status != 'CANCELADA'
          )
      )
     
@@ -153,7 +156,8 @@ def get_attendance_stats(db: Session, start_date, end_date, company_id: int = No
      .filter(
          and_(
              DailyRequest.request_date >= start_date,
-             DailyRequest.request_date <= end_date
+             DailyRequest.request_date <= end_date,
+             DailyRequest.status != 'CANCELADA'
          )
      )
     
@@ -293,6 +297,17 @@ def update_daily_request_status(db: Session, request_id: int, status: str, user_
     if db_request:
         db_request.status = status
         db_request.updated_by = user_id
+        
+        if status == "CONFIRMADA":
+            shifts_subquery = db.query(WorkShift.id).filter(WorkShift.request_id == request_id).subquery()
+            db.query(ShiftAssignment).filter(
+                ShiftAssignment.shift_id.in_(shifts_subquery),
+                ShiftAssignment.status == "ASIGNADO"
+            ).update(
+                {"status": "FALTOU", "updated_by": user_id},
+                synchronize_session=False
+            )
+            
         db.commit()
         db.refresh(db_request)
     return db_request
