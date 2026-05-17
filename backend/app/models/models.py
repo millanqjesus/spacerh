@@ -40,6 +40,20 @@ class Company(Base):
     created_by = Column(Integer, ForeignKey('auth.users.id'), nullable=False)
     updated_by = Column(Integer, ForeignKey('auth.users.id'), nullable=True)
 
+class DailyRequestStatus(Base):
+    __tablename__ = "daily_request_status"
+    __table_args__ = {"schema": "business", "extend_existing": True}
+
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String(20), unique=True, nullable=False)
+    description = Column(String(100))
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    created_by = Column(Integer, ForeignKey('auth.users.id'), nullable=False)
+    updated_by = Column(Integer, ForeignKey('auth.users.id'), nullable=True)
+
+    requests = relationship("DailyRequest", back_populates="status_rel")
+
 class DailyRequest(Base):
     __tablename__ = "daily_requests"
     __table_args__ = {"schema": "business", "extend_existing": True}
@@ -47,14 +61,21 @@ class DailyRequest(Base):
     id = Column(Integer, primary_key=True, index=True)
     company_id = Column(Integer, ForeignKey('business.companies.id'), nullable=False)
     request_date = Column(Date, nullable=False)
-    status = Column(String(20), server_default='PENDIENTE', nullable=False)
+    
+    # FK a daily_request_status
+    status_id = Column(Integer, ForeignKey('business.daily_request_status.id'), nullable=False)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     created_by = Column(Integer, ForeignKey('auth.users.id'), nullable=False)
     updated_by = Column(Integer, ForeignKey('auth.users.id'), nullable=True)
 
+    status_rel = relationship("DailyRequestStatus", back_populates="requests", lazy="joined")
     shifts = relationship("WorkShift", back_populates="request", cascade="all, delete-orphan")
+
+    @property
+    def status(self):
+        return self.status_rel.code if self.status_rel else None
 
 class WorkShift(Base):
     __tablename__ = "work_shifts"

@@ -68,20 +68,20 @@ export default function Requests() {
   };
 
   // Acción: Cambiar Estado (Confirmar / Cancelar)
-  const handleStatusChange = async (request, newStatus) => {
+  const handleStatusChange = async (request, newStatusId) => {
     setOpenMenuId(null);
     try {
-      await api.put(`/daily-requests/${request.id}/status`, { status: newStatus });
+      const response = await api.put(`/daily-requests/${request.id}/status`, { status_id: newStatusId });
 
-      // Actualizamos la lista localmente para feedback inmediato
+      // Actualizamos la lista localmente para feedback inmediato usando la respuesta
       const updatedRequests = requests.map(r =>
-        r.id === request.id ? { ...r, status: newStatus } : r
+        r.id === request.id ? response.data : r
       );
       setRequests(updatedRequests);
 
       showDialog({
         title: 'Status Atualizado',
-        text: `A solicitação agora está ${newStatus}.`,
+        text: `A solicitação foi atualizada.`,
         icon: 'success',
         timer: 1500,
         showConfirmButton: false
@@ -167,8 +167,8 @@ export default function Requests() {
                       <h3 className="font-bold text-gray-800 line-clamp-1">
                         {companies.find(c => c.id === req.company_id)?.name || 'Empresa Desconhecida'}
                       </h3>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${req.status === 'PENDIENTE' ? 'bg-yellow-100 text-yellow-700' :
-                        req.status === 'CONFIRMADA' ? 'bg-green-100 text-green-700' :
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${req.status_id === 1 ? 'bg-yellow-100 text-yellow-700' :
+                        req.status_id === 2 ? 'bg-green-100 text-green-700' :
                           'bg-gray-100 text-gray-600'
                         }`}>
                         {req.status}
@@ -191,18 +191,18 @@ export default function Requests() {
                     {/* Menú Flotante */}
                     {openMenuId === req.id && (
                       <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 z-10 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-                        {req.status !== 'CONFIRMADA' && (
+                        {req.status_id !== 2 && (
                           <button
-                            onClick={(e) => { e.stopPropagation(); handleStatusChange(req, 'CONFIRMADA'); }}
+                            onClick={(e) => { e.stopPropagation(); handleStatusChange(req, 2); }}
                             className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 flex items-center gap-2"
                           >
                             <CheckCircle size={16} /> Confirmar
                           </button>
                         )}
 
-                        {req.status !== 'CANCELADA' && (
+                        {req.status_id !== 3 && (
                           <button
-                            onClick={(e) => { e.stopPropagation(); handleStatusChange(req, 'CANCELADA'); }}
+                            onClick={(e) => { e.stopPropagation(); handleStatusChange(req, 3); }}
                             className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 flex items-center gap-2"
                           >
                             <XCircle size={16} /> Cancelar

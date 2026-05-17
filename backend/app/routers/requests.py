@@ -11,7 +11,10 @@ router = APIRouter(prefix="/daily-requests", tags=["Solicitudes Diarias"])
 
 @router.post("/", response_model=DailyRequestResponse, status_code=status.HTTP_201_CREATED)
 def create_daily_request(request: DailyRequestCreate, db: Session = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):
-    return requests_crud.create_daily_request(db=db, request=request, user_id=current_user.id)
+    try:
+        return requests_crud.create_daily_request(db=db, request=request, user_id=current_user.id)
+    except ValueError as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/", response_model=List[DailyRequestResponse])
 def read_daily_requests(
@@ -97,15 +100,18 @@ def update_request_status(
     current_user: UserResponse = Depends(get_current_user)
 ):
     """Actualiza el estado de una solicitud (CONFIRMADA, CANCELADA, etc)"""
-    if not update_data.status:
-         raise HTTPException(status_code=400, detail="O campo 'status' é obrigatório")
+    if not update_data.status_id:
+         raise HTTPException(status_code=400, detail="O campo 'status_id' é obrigatório")
          
-    updated_request = requests_crud.update_daily_request_status(
-        db=db, 
-        request_id=request_id, 
-        status=update_data.status, 
-        user_id=current_user.id
-    )
+    try:
+        updated_request = requests_crud.update_daily_request_status(
+            db=db, 
+            request_id=request_id, 
+            status_id=update_data.status_id, 
+            user_id=current_user.id
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     if not updated_request:
         raise HTTPException(status_code=404, detail="Solicitação não encontrada")
     return updated_request

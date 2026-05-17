@@ -122,7 +122,7 @@ export default function RequestDetails() {
           </div>
         </div>
         <div className="flex flex-col items-end justify-center gap-2">
-          <span className={`px-4 py-1.5 rounded-full text-sm font-bold tracking-wide ${request.status === 'PENDIENTE' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
+          <span className={`px-4 py-1.5 rounded-full text-sm font-bold tracking-wide ${request.status_id === 1 ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
             }`}>
             {request.status}
           </span>

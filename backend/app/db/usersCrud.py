@@ -3,6 +3,7 @@ from sqlalchemy import desc
 from app.models.models import User
 from app.schemas.schemas import UserCreate, UserUpdate
 from app.core.security import get_password_hash
+from enum import Enum
 
 def get_user_by_email(db: Session, email: str):
     """Busca si un email ya existe"""
@@ -36,8 +37,8 @@ def create_user(db: Session, user: UserCreate):
         last_name=user.last_name,
         cpf=user.cpf,
         role=user.role.value if user.role else "contratado",
-        code=user.code,
-        pix=user.pix
+        code=None if user.code == "" else user.code,
+        pix=None if user.pix == "" else user.pix
     )
     
     db.add(db_user)
@@ -62,9 +63,13 @@ def update_user(db: Session, user_id: int, user_update: UserUpdate):
         if password: # Solo si no está vacía
             update_data['hashed_password'] = get_password_hash(password)
 
-    # 4. Actualizar campos dinámicamente
     for key, value in update_data.items():
-        setattr(db_user, key, value)
+        if isinstance(value, Enum):
+            setattr(db_user, key, value.value)
+        elif key in ['code', 'pix'] and value == "":
+            setattr(db_user, key, None)
+        else:
+            setattr(db_user, key, value)
 
     db.add(db_user)
     db.commit()

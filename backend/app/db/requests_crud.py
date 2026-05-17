@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc, and_
-from app.models.models import DailyRequest, WorkShift, ShiftAssignment, User, Company
+from app.models.models import DailyRequest, WorkShift, ShiftAssignment, User, Company, DailyRequestStatus
 from app.schemas.request_schemas import DailyRequestCreate, ShiftAssignmentCreate
 
 def get_daily_request(db: Session, request_id: int):
@@ -33,12 +33,13 @@ def get_payments_report(db: Session, start_date, end_date, company_id: int = Non
     ).join(ShiftAssignment, ShiftAssignment.employee_id == User.id)\
      .join(WorkShift, WorkShift.id == ShiftAssignment.shift_id)\
      .join(DailyRequest, DailyRequest.id == WorkShift.request_id)\
+     .join(DailyRequestStatus, DailyRequestStatus.id == DailyRequest.status_id)\
      .filter(
          and_(
              DailyRequest.request_date >= start_date,
              DailyRequest.request_date <= end_date,
              ShiftAssignment.status == 'PRESENTE',
-             DailyRequest.status != 'CANCELADA'
+             DailyRequest.status_id != 3
          )
      )
     
@@ -84,11 +85,12 @@ def get_attendance_report(db: Session, start_date, end_date, company_id: int = N
      .join(ShiftAssignment, ShiftAssignment.shift_id == WorkShift.id)\
      .join(User, User.id == ShiftAssignment.employee_id)\
      .join(Company, Company.id == DailyRequest.company_id)\
+     .join(DailyRequestStatus, DailyRequestStatus.id == DailyRequest.status_id)\
      .filter(
          and_(
              DailyRequest.request_date >= start_date,
              DailyRequest.request_date <= end_date,
-             DailyRequest.status != 'CANCELADA'
+             DailyRequest.status_id != 3
          )
      )
     
@@ -118,11 +120,12 @@ def get_dashboard_stats(db: Session, start_date, end_date, company_id: int = Non
         Company.name.label("company_name"),
         func.count(DailyRequest.id).label("request_count")
     ).join(Company, Company.id == DailyRequest.company_id)\
+     .join(DailyRequestStatus, DailyRequestStatus.id == DailyRequest.status_id)\
      .filter(
          and_(
              DailyRequest.request_date >= start_date,
              DailyRequest.request_date <= end_date,
-             DailyRequest.status != 'CANCELADA'
+             DailyRequest.status_id != 3
          )
      )
     
@@ -153,11 +156,12 @@ def get_attendance_stats(db: Session, start_date, end_date, company_id: int = No
     ).join(WorkShift, WorkShift.id == ShiftAssignment.shift_id)\
      .join(DailyRequest, DailyRequest.id == WorkShift.request_id)\
      .join(Company, Company.id == DailyRequest.company_id)\
+     .join(DailyRequestStatus, DailyRequestStatus.id == DailyRequest.status_id)\
      .filter(
          and_(
              DailyRequest.request_date >= start_date,
              DailyRequest.request_date <= end_date,
-             DailyRequest.status != 'CANCELADA'
+             DailyRequest.status_id != 3
          )
      )
     
@@ -201,10 +205,11 @@ def get_daily_requests(db: Session, skip: int = 0, limit: int = 100, company_id:
     return query.order_by(desc(DailyRequest.request_date)).offset(skip).limit(limit).all()
 
 def create_daily_request(db: Session, request: DailyRequestCreate, user_id: int):
+    # status_id 1 = PENDENTE
     db_request = DailyRequest(
         company_id=request.company_id,
         request_date=request.request_date,
-        status="PENDIENTE",
+        status_id=1,
         created_by=user_id,
         updated_by=user_id
     )
@@ -292,13 +297,18 @@ def update_assignment_status(db: Session, assignment_id: int, status: str, user_
         db.refresh(db_assign)
     return db_assign
 
-def update_daily_request_status(db: Session, request_id: int, status: str, user_id: int):
+def update_daily_request_status(db: Session, request_id: int, status_id: int, user_id: int):
     db_request = db.query(DailyRequest).filter(DailyRequest.id == request_id).first()
     if db_request:
-        db_request.status = status
+        status_obj = db.query(DailyRequestStatus).filter(DailyRequestStatus.id == status_id).first()
+        if not status_obj:
+            raise ValueError(f"Estado con ID '{status_id}' no encontrado")
+            
+        db_request.status_id = status_id
         db_request.updated_by = user_id
         
-        if status == "CONFIRMADA":
+        # 2 = CONFIRMADA
+        if status_id == 2:
             shifts_subquery = db.query(WorkShift.id).filter(WorkShift.request_id == request_id).subquery()
             db.query(ShiftAssignment).filter(
                 ShiftAssignment.shift_id.in_(shifts_subquery),

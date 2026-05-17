@@ -87,7 +87,7 @@ class WorkShiftResponse(WorkShiftBase):
 # --- 3. SOLICITUDES DIARIAS (Padre) ---
 class DailyRequestBase(BaseModel):
     request_date: date
-    status: str = "PENDIENTE"
+    status: Optional[str] = None
 
 class DailyRequestCreate(DailyRequestBase):
     company_id: int
@@ -95,11 +95,12 @@ class DailyRequestCreate(DailyRequestBase):
 
 class DailyRequestUpdate(BaseModel):
     request_date: Optional[date] = None
-    status: Optional[str] = None
+    status_id: Optional[int] = None
 
 class DailyRequestResponse(DailyRequestBase):
     id: int
     company_id: int
+    status_id: int
     created_at: datetime
     
     # Incluye lista de turnos (que ahora incluyen asignaciones)
