@@ -4,6 +4,7 @@ import { Mail, Lock, Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom'; // Para redireccionar
 import { useAuth } from '../context/AuthContext'; // Importamos el hook del contexto
 import api from '../services/api';
+import SystemAdvantages from '../components/SystemAdvantages';
 
 export default function Login() {
   const [error, setError] = useState('');
@@ -52,8 +53,15 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden">
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Columna Izquierda - Ventajas del Sistema */}
+      <div className="hidden lg:block lg:w-1/2 lg:flex-none">
+        <SystemAdvantages />
+      </div>
+
+      {/* Columna Derecha - Formulario de Login */}
+      <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
 
         {/* Encabezado con Logo */}
         <div className="bg-space-orange/10 p-8 text-center">
@@ -171,6 +179,7 @@ export default function Login() {
               {/* Esqueceu sua senha? */}
             </a>
           </div>
+        </div>
         </div>
       </div>
     </div>
