@@ -31,14 +31,18 @@ export const AuthProvider = ({ children }) => {
     recoverSession();
   }, []);
 
-  const login = async (accessToken) => {
+  const login = async (accessToken, tenant_uuid) => {
     // 2. Guardamos en DISCO (localStorage) para que sobreviva al F5
     localStorage.setItem('token', accessToken);
+    localStorage.setItem('tenant_uuid', tenant_uuid);
     setIsAuthenticated(true);
+
+    console.error(accessToken, tenant_uuid);
 
     try {
       const response = await api.get('/users/me');
       setUser(response.data);
+      console.error(response.data);
       return true;
     } catch (error) {
       logout();

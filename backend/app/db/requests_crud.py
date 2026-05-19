@@ -3,12 +3,17 @@ from sqlalchemy import desc, and_
 from app.models.models import DailyRequest, WorkShift, ShiftAssignment, User, Company, DailyRequestStatus
 from app.schemas.request_schemas import DailyRequestCreate, ShiftAssignmentCreate
 
-def get_daily_request(db: Session, request_id: int):
-    return db.query(DailyRequest).options(
+def get_daily_request(db: Session, request_id: int, tenant_id: int = None):
+    query = db.query(DailyRequest).options(
         joinedload(DailyRequest.shifts)
         .joinedload(WorkShift.assignments)
         .joinedload(ShiftAssignment.employee)
-    ).filter(DailyRequest.id == request_id).first()
+    ).filter(DailyRequest.id == request_id)
+    
+    if tenant_id:
+        query = query.filter(DailyRequest.tenant_id == tenant_id)
+    
+    return query.first()
 
 from sqlalchemy.sql import func, case
 
@@ -16,7 +21,7 @@ def _get_employee_filter(user_id: int):
     """Helper para obtener filtro de empleado logueado."""
     return ShiftAssignment.employee_id == user_id
 
-def get_payments_report(db: Session, start_date, end_date, company_id: int = None, user_id: int = None, role: str = None):
+def get_payments_report(db: Session, start_date, end_date, company_id: int = None, user_id: int = None, role: str = None, tenant_id: int = None):
     amount_expr = case(
         (WorkShift.has_discount == True, WorkShift.payment_amount * (1 - WorkShift.discount_percentage / 100.0)),
         else_=WorkShift.payment_amount
@@ -34,6 +39,7 @@ def get_payments_report(db: Session, start_date, end_date, company_id: int = Non
      .join(WorkShift, WorkShift.id == ShiftAssignment.shift_id)\
      .join(DailyRequest, DailyRequest.id == WorkShift.request_id)\
      .join(DailyRequestStatus, DailyRequestStatus.id == DailyRequest.status_id)\
+     .join(Company, Company.id == DailyRequest.company_id)\
      .filter(
          and_(
              DailyRequest.request_date >= start_date,
@@ -48,6 +54,9 @@ def get_payments_report(db: Session, start_date, end_date, company_id: int = Non
     
     if role == "contratado" and user_id:
         query = query.filter(ShiftAssignment.employee_id == user_id)
+    
+    if tenant_id:
+        query = query.filter(Company.tenant_id == tenant_id)
         
     query = query.group_by(User.id, User.code, User.first_name, User.last_name, User.pix)\
                  .order_by(User.first_name, User.last_name)
@@ -66,7 +75,7 @@ def get_payments_report(db: Session, start_date, end_date, company_id: int = Non
         for r in results
     ]
 
-def get_attendance_report(db: Session, start_date, end_date, company_id: int = None, user_id: int = None, role: str = None):
+def get_attendance_report(db: Session, start_date, end_date, company_id: int = None, user_id: int = None, role: str = None, tenant_id: int = None):
     amount_expr = case(
         (WorkShift.has_discount == True, WorkShift.payment_amount * (1 - WorkShift.discount_percentage / 100.0)),
         else_=WorkShift.payment_amount
@@ -99,6 +108,9 @@ def get_attendance_report(db: Session, start_date, end_date, company_id: int = N
     
     if role == "contratado" and user_id:
         query = query.filter(ShiftAssignment.employee_id == user_id)
+    
+    if tenant_id:
+        query = query.filter(Company.tenant_id == tenant_id)
         
     query = query.order_by(DailyRequest.request_date, User.first_name)
     results = query.all()
@@ -115,7 +127,7 @@ def get_attendance_report(db: Session, start_date, end_date, company_id: int = N
         for r in results
     ]
 
-def get_dashboard_stats(db: Session, start_date, end_date, company_id: int = None, user_id: int = None, role: str = None):
+def get_dashboard_stats(db: Session, start_date, end_date, company_id: int = None, user_id: int = None, role: str = None, tenant_id: int = None):
     query = db.query(
         Company.name.label("company_name"),
         func.count(DailyRequest.id).label("request_count")
@@ -131,6 +143,9 @@ def get_dashboard_stats(db: Session, start_date, end_date, company_id: int = Non
     
     if company_id:
         query = query.filter(DailyRequest.company_id == company_id)
+    
+    if tenant_id:
+        query = query.filter(Company.tenant_id == tenant_id)
     
     if role == "contratado" and user_id:
         query = query.join(WorkShift, WorkShift.request_id == DailyRequest.id)\
@@ -148,7 +163,7 @@ def get_dashboard_stats(db: Session, start_date, end_date, company_id: int = Non
         for r in results
     ]
 
-def get_attendance_stats(db: Session, start_date, end_date, company_id: int = None, user_id: int = None, role: str = None):
+def get_attendance_stats(db: Session, start_date, end_date, company_id: int = None, user_id: int = None, role: str = None, tenant_id: int = None):
     query = db.query(
         Company.name.label("company_name"),
         ShiftAssignment.status,
@@ -170,6 +185,9 @@ def get_attendance_stats(db: Session, start_date, end_date, company_id: int = No
     
     if role == "contratado" and user_id:
         query = query.filter(ShiftAssignment.employee_id == user_id)
+    
+    if tenant_id:
+        query = query.filter(Company.tenant_id == tenant_id)
         
     query = query.group_by(Company.name, ShiftAssignment.status).order_by(Company.name)
     results = query.all()
@@ -187,7 +205,7 @@ def get_attendance_stats(db: Session, start_date, end_date, company_id: int = No
 
 
 
-def get_daily_requests(db: Session, skip: int = 0, limit: int = 100, company_id: int = None, start_date: str = None, end_date: str = None, user_id: int = None, role: str = None):
+def get_daily_requests(db: Session, skip: int = 0, limit: int = 100, company_id: int = None, start_date: str = None, end_date: str = None, user_id: int = None, role: str = None, tenant_id: int = None):
     query = db.query(DailyRequest)
     if company_id:
         query = query.filter(DailyRequest.company_id == company_id)
@@ -195,6 +213,8 @@ def get_daily_requests(db: Session, skip: int = 0, limit: int = 100, company_id:
         query = query.filter(DailyRequest.request_date >= start_date)
     if end_date:
         query = query.filter(DailyRequest.request_date <= end_date)
+    if tenant_id:
+        query = query.filter(DailyRequest.tenant_id == tenant_id)
     
     if role == "contratado" and user_id:
         query = query.join(WorkShift, WorkShift.request_id == DailyRequest.id)\
@@ -204,12 +224,12 @@ def get_daily_requests(db: Session, skip: int = 0, limit: int = 100, company_id:
     
     return query.order_by(desc(DailyRequest.request_date)).offset(skip).limit(limit).all()
 
-def create_daily_request(db: Session, request: DailyRequestCreate, user_id: int):
-    # status_id 1 = PENDENTE
+def create_daily_request(db: Session, request: DailyRequestCreate, user_id: int, tenant_id: int = None):
     db_request = DailyRequest(
         company_id=request.company_id,
         request_date=request.request_date,
         status_id=1,
+        tenant_id=tenant_id,
         created_by=user_id,
         updated_by=user_id
     )
@@ -226,6 +246,7 @@ def create_daily_request(db: Session, request: DailyRequestCreate, user_id: int)
             quantity=shift.quantity,
             has_discount=shift.has_discount,
             discount_percentage=final_discount,
+            tenant_id=tenant_id,
             created_by=user_id,
             updated_by=user_id
         )
@@ -237,11 +258,20 @@ def create_daily_request(db: Session, request: DailyRequestCreate, user_id: int)
 
 # --- LÓGICA DE ASIGNACIÓN MEJORADA ---
 
-def create_assignment(db: Session, assignment: ShiftAssignmentCreate, user_id: int):
+def create_assignment(db: Session, assignment: ShiftAssignmentCreate, user_id: int, tenant_id: int = None):
     # 1. Obtener el turno para ver el límite (quantity)
     shift = db.query(WorkShift).filter(WorkShift.id == assignment.shift_id).first()
     if not shift:
         return "NOT_FOUND"
+    
+    # Verificar que el turno pertenece al tenant del usuario
+    if tenant_id:
+        daily_request = db.query(DailyRequest).filter(
+            DailyRequest.id == shift.request_id,
+            DailyRequest.tenant_id == tenant_id
+        ).first()
+        if not daily_request:
+            return "NOT_FOUND"
 
     # 2. Contar cuántos ya están asignados
     current_count = db.query(ShiftAssignment).filter(
@@ -266,30 +296,36 @@ def create_assignment(db: Session, assignment: ShiftAssignmentCreate, user_id: i
         shift_id=assignment.shift_id,
         employee_id=assignment.employee_id,
         status="ASIGNADO",
+        tenant_id=tenant_id,
         created_by=user_id,
         updated_by=user_id
     )
     db.add(db_assignment)
     db.commit()
     
-    # 6. Recargar para traer los datos del empleado (necesario para la respuesta del frontend)
+    # 6. Recargar para traer los datos del empleado
     db.refresh(db_assignment) 
     return db_assignment
 
     args = [assignment.shift_id, assignment.employee_id, "ASIGNADO", user_id, user_id]
     # ... (código anterior) ... esto no es lo que quiero reemplazar, voy a appendear al final
 
-def delete_assignment(db: Session, assignment_id: int):
-    # ... (contenido existente) ...
-    db_assign = db.query(ShiftAssignment).filter(ShiftAssignment.id == assignment_id).first()
+def delete_assignment(db: Session, assignment_id: int, tenant_id: int = None):
+    query = db.query(ShiftAssignment).filter(ShiftAssignment.id == assignment_id)
+    if tenant_id:
+        query = query.filter(ShiftAssignment.tenant_id == tenant_id)
+    db_assign = query.first()
     if db_assign:
         db.delete(db_assign)
         db.commit()
         return True
     return False
 
-def update_assignment_status(db: Session, assignment_id: int, status: str, user_id: int):
-    db_assign = db.query(ShiftAssignment).filter(ShiftAssignment.id == assignment_id).first()
+def update_assignment_status(db: Session, assignment_id: int, status: str, user_id: int, tenant_id: int = None):
+    query = db.query(ShiftAssignment).filter(ShiftAssignment.id == assignment_id)
+    if tenant_id:
+        query = query.filter(ShiftAssignment.tenant_id == tenant_id)
+    db_assign = query.first()
     if db_assign:
         db_assign.status = status
         db_assign.updated_by = user_id
@@ -297,8 +333,11 @@ def update_assignment_status(db: Session, assignment_id: int, status: str, user_
         db.refresh(db_assign)
     return db_assign
 
-def update_daily_request_status(db: Session, request_id: int, status_id: int, user_id: int):
-    db_request = db.query(DailyRequest).filter(DailyRequest.id == request_id).first()
+def update_daily_request_status(db: Session, request_id: int, status_id: int, user_id: int, tenant_id: int = None):
+    query = db.query(DailyRequest).filter(DailyRequest.id == request_id)
+    if tenant_id:
+        query = query.filter(DailyRequest.tenant_id == tenant_id)
+    db_request = query.first()
     if db_request:
         status_obj = db.query(DailyRequestStatus).filter(DailyRequestStatus.id == status_id).first()
         if not status_obj:
@@ -322,8 +361,11 @@ def update_daily_request_status(db: Session, request_id: int, status_id: int, us
         db.refresh(db_request)
     return db_request
 
-def delete_daily_request(db: Session, request_id: int):
-    db_request = db.query(DailyRequest).filter(DailyRequest.id == request_id).first()
+def delete_daily_request(db: Session, request_id: int, tenant_id: int = None):
+    query = db.query(DailyRequest).filter(DailyRequest.id == request_id)
+    if tenant_id:
+        query = query.filter(DailyRequest.tenant_id == tenant_id)
+    db_request = query.first()
     if db_request:
         db.delete(db_request)
         db.commit()

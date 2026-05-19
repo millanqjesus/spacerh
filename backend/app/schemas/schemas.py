@@ -3,6 +3,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 import re
+from uuid import UUID
 
 # Definimos los roles permitidos para tener orden
 class UserRole(str, Enum):
@@ -36,6 +37,9 @@ class UserCreate(BaseModel):
             raise ValueError('Deve conter caractere especial')
         return v
 
+class PublicUserCreate(UserCreate):
+    tenant_uuid: Optional[UUID] = None
+
 # --- CLASE DE ACTUALIZACIÓN (Update) ---
 class UserUpdate(BaseModel):
     first_name: Optional[str] = None
@@ -59,6 +63,7 @@ class UserResponse(BaseModel):
     role: str
     code: Optional[str] = None
     pix: Optional[str] = None
+    tenant_uuid: Optional[UUID] = None
     created_at: datetime
     
     model_config = ConfigDict(from_attributes=True)
@@ -66,3 +71,4 @@ class UserResponse(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+    tenant_uuid: Optional[str] = None

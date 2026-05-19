@@ -15,10 +15,9 @@ def read_users(
     current_user: UserResponse = Depends(get_current_user)
 ):
     """
-    Retorna la lista de todos los usuarios registrados.
-    Requiere estar logueado (current_user).
+    Retorna la lista de usuarios del tenant del usuario autenticado.
     """
-    return usersCrud.get_users(db, skip=skip, limit=limit)
+    return usersCrud.get_users(db, skip=skip, limit=limit, tenant_id=current_user.tenant_id)
 
 # Endpoint protegido movido aquí
 @router.get("/me", response_model=UserResponse)
@@ -38,7 +37,7 @@ def update_user(
     """
     # Aquí podrías validar roles: if current_user.role != 'admin'...
     
-    updated_user = usersCrud.update_user(db, user_id=user_id, user_update=user_update)
+    updated_user = usersCrud.update_user(db, user_id=user_id, user_update=user_update, tenant_id=current_user.tenant_id)
     if updated_user is None:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
         

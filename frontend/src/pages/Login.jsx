@@ -31,10 +31,10 @@ export default function Login() {
         }
       });
 
-      const { access_token } = response.data;
+      const { access_token, tenant_uuid } = response.data;
 
       // 1. Usamos la función login del contexto (actualiza estado global)
-      await login(access_token);
+      await login(access_token, tenant_uuid);
 
       // 2. Redirigimos al Dashboard
       // alert(`Login realizado com sucesso!`);

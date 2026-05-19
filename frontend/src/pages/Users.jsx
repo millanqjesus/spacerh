@@ -48,7 +48,9 @@ export default function Users() {
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
-      const response = await api.get('/users');
+      const tenant_uuid = localStorage.getItem('tenant_uuid');
+      const params = tenant_uuid ? { tenant_uuid } : {};
+      const response = await api.get('/users', { params });
       setUsers(response.data);
       setFilteredUsers(response.data);
     } catch (error) {

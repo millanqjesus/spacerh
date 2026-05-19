@@ -16,8 +16,8 @@ def read_companies(
     db: Session = Depends(get_db),
     current_user: UserResponse = Depends(get_current_user)
 ):
-    """Listar todas las empresas (requiere login)"""
-    return companies_crud.get_companies(db, skip=skip, limit=limit)
+    """Listar empresas filtradas por el tenant del usuario autenticado"""
+    return companies_crud.get_companies(db, skip=skip, limit=limit, tenant_id=current_user.tenant_id)
 
 @router.get("/{company_id}", response_model=CompanyResponse)
 def read_company(
@@ -25,7 +25,7 @@ def read_company(
     db: Session = Depends(get_db),
     current_user: UserResponse = Depends(get_current_user)
 ):
-    db_company = companies_crud.get_company(db, company_id=company_id)
+    db_company = companies_crud.get_company(db, company_id=company_id, tenant_id=current_user.tenant_id)
     if db_company is None:
         raise HTTPException(status_code=404, detail="Empresa não encontrada")
     return db_company
@@ -42,7 +42,7 @@ def create_company(
     if db_company:
         raise HTTPException(status_code=400, detail="Empresa com este ID Fiscal já existe.")
     
-    return companies_crud.create_company(db=db, company=company, user_id=current_user.id)
+    return companies_crud.create_company(db=db, company=company, user_id=current_user.id, tenant_id=current_user.tenant_id)
 
 @router.put("/{company_id}", response_model=CompanyResponse)
 def update_company(
@@ -56,7 +56,8 @@ def update_company(
         db=db, 
         company_id=company_id, 
         company_update=company_update, 
-        user_id=current_user.id
+        user_id=current_user.id,
+        tenant_id=current_user.tenant_id
     )
     if not updated_company:
         raise HTTPException(status_code=404, detail="Empresa não encontrada")

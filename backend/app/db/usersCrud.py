@@ -13,20 +13,24 @@ def get_user_by_cpf(db: Session, cpf: str):
     """Busca si un CPF ya existe"""
     return db.query(User).filter(User.cpf == cpf).first()
 
-def get_users(db: Session, skip: int = 0, limit: int = 100):
+def get_users(db: Session, skip: int = 0, limit: int = 100, tenant_id: int = None):
     """
     Obtiene lista de usuarios con orden específico:
     1. is_active = true (primero)
     2. first_name asc
     3. last_name asc
+    Filtra por tenant_id si se proporciona.
     """
-    return db.query(User).order_by(
-        desc(User.is_active), # True (1) va antes que False (0)
+    query = db.query(User)
+    if tenant_id:
+        query = query.filter(User.tenant_id == tenant_id)
+    return query.order_by(
+        desc(User.is_active),
         User.first_name.asc(),
         User.last_name.asc()
     ).offset(skip).limit(limit).all()
 
-def create_user(db: Session, user: UserCreate):
+def create_user(db: Session, user: UserCreate, tenant_id: int = None):
     """Crea un nuevo usuario en la BD"""
     hashed_password = get_password_hash(user.password)
     
@@ -38,7 +42,8 @@ def create_user(db: Session, user: UserCreate):
         cpf=user.cpf,
         role=user.role.value if user.role else "contratado",
         code=None if user.code == "" else user.code,
-        pix=None if user.pix == "" else user.pix
+        pix=None if user.pix == "" else user.pix,
+        tenant_id=tenant_id
     )
     
     db.add(db_user)
@@ -48,9 +53,11 @@ def create_user(db: Session, user: UserCreate):
     return db_user
 
 # --- NUEVA FUNCION: ACTUALIZAR ---
-def update_user(db: Session, user_id: int, user_update: UserUpdate):
-    # 1. Buscar usuario
-    db_user = db.query(User).filter(User.id == user_id).first()
+def update_user(db: Session, user_id: int, user_update: UserUpdate, tenant_id: int = None):
+    query = db.query(User).filter(User.id == user_id)
+    if tenant_id:
+        query = query.filter(User.tenant_id == tenant_id)
+    db_user = query.first()
     if not db_user:
         return None
 

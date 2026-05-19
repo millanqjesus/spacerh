@@ -38,7 +38,9 @@ export default function Dashboard() {
 
   const fetchCompanies = async () => {
     try {
-      const response = await api.get('/companies/');
+      const tenant_uuid = localStorage.getItem('tenant_uuid');
+      const params = tenant_uuid ? { tenant_uuid } : {};
+      const response = await api.get('/companies/', { params });
       setCompanies(response.data);
     } catch (error) {
       console.error('Error fetching companies:', error);
@@ -48,10 +50,12 @@ export default function Dashboard() {
   const fetchStats = async () => {
     setLoading(true);
     try {
+      const tenant_uuid = localStorage.getItem('tenant_uuid');
       const params = {
         start_date: filters.startDate,
         end_date: filters.endDate,
-        ...(filters.companyId && { company_id: filters.companyId })
+        ...(filters.companyId && { company_id: filters.companyId }),
+        ...(tenant_uuid && { tenant_uuid })
       };
 
       const [dashboardRes, attendanceRes] = await Promise.all([

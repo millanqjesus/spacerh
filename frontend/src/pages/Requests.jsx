@@ -40,15 +40,17 @@ export default function Requests() {
     try {
       setIsLoading(true);
 
+      const tenant_uuid = localStorage.getItem('tenant_uuid');
       const params = {
         start_date: filters.startDate,
         end_date: filters.endDate,
-        ...(filters.companyId && { company_id: filters.companyId })
+        ...(filters.companyId && { company_id: filters.companyId }),
+        ...(tenant_uuid && { tenant_uuid })
       };
 
       const [reqResponse, compResponse] = await Promise.all([
         api.get('/daily-requests', { params }),
-        api.get('/companies')
+        api.get('/companies', { params: { tenant_uuid } })
       ]);
 
       setRequests(reqResponse.data);

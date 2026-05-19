@@ -140,7 +140,9 @@ export default function RequestModal({ isOpen, onClose, onSuccess }) {
   useEffect(() => {
     const loadCompanies = async () => {
       try {
-        const response = await api.get('/companies');
+        const tenant_uuid = localStorage.getItem('tenant_uuid');
+        const params = tenant_uuid ? { tenant_uuid } : {};
+        const response = await api.get('/companies', { params });
         setCompanies(response.data.filter(c => c.is_active));
       } catch (error) {
         console.error("Error al cargar empresas", error);

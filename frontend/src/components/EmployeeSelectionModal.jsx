@@ -37,7 +37,9 @@ export default function EmployeeSelectionModal({ isOpen, onClose, shiftId, onSuc
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/users');
+      const tenant_uuid = localStorage.getItem('tenant_uuid');
+      const params = tenant_uuid ? { tenant_uuid } : {};
+      const response = await api.get('/users', { params });
       // Filtramos solo los que son trabajadores ("contratado") y están activos
       const workers = response.data.filter(u => u.role === 'contratado' && u.is_active);
       setEmployees(workers);

@@ -36,7 +36,8 @@ export default function PaymentsReport() {
 
   const fetchCompanies = async () => {
     try {
-      const response = await api.get('/companies/');
+      const tenant_uuid = localStorage.getItem('tenant_uuid');
+      const response = await api.get('/companies/', { params: { tenant_uuid } });
       setCompanies(response.data);
     } catch (error) {
       console.error('Error fetching companies:', error);
@@ -46,9 +47,11 @@ export default function PaymentsReport() {
   const fetchReportData = async (start, end, companyId = '') => {
     setLoading(true);
     try {
+      const tenant_uuid = localStorage.getItem('tenant_uuid');
       const params = {
         start_date: start,
         end_date: end,
+        tenant_uuid,
         ...(companyId && { company_id: companyId })
       };
       const response = await api.get('/daily-requests/report/payments', { params });

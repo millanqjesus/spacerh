@@ -1,7 +1,25 @@
-from sqlalchemy import Column, Integer, String, Boolean, text, DateTime, ForeignKey, Date, Float
+from sqlalchemy import Column, Integer, String, Boolean, text, DateTime, ForeignKey, Date, Float, BigInteger
 from sqlalchemy.orm import relationship 
 from sqlalchemy.sql import func
+from sqlalchemy.dialects.postgresql import UUID
+from uuid import uuid4
 from app.db.database import Base 
+
+class Tenant(Base):
+    __tablename__ = "tenants"
+    __table_args__ = {"schema": "core", "extend_existing": True}
+
+    id = Column(Integer, primary_key=True, index=True)
+    uuid = Column(UUID(as_uuid=True), nullable=False, default=lambda: str(uuid4()))
+    name = Column(String(150), nullable=False)
+    document = Column(String(30), nullable=True)
+    email = Column(String(150), nullable=True)
+    phone = Column(String(30), nullable=True)
+    active = Column(Integer, nullable=False, default=1)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    created_by = Column(Integer, ForeignKey('auth.users.id'), nullable=False)
+    updated_by = Column(Integer, ForeignKey('auth.users.id'), nullable=True)
 
 class User(Base):
     __tablename__ = "users"
@@ -17,12 +35,18 @@ class User(Base):
     role = Column(String(20), server_default='user', nullable=False)
     code = Column(String(50), nullable=True)
     pix = Column(String(255), nullable=True)
+    tenant_id = Column(BigInteger, ForeignKey('core.tenants.id'), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     # ⚠️ CORRECCIÓN: Especificamos explícitamente qué llave foránea usar
     # "ShiftAssignment.employee_id" le dice a SQLAlchemy que ignore created_by/updated_by para esta relación
     assignments = relationship("ShiftAssignment", back_populates="employee", foreign_keys="ShiftAssignment.employee_id")
+    tenant = relationship("Tenant", foreign_keys=[tenant_id], lazy="joined")
+
+    @property
+    def tenant_uuid(self):
+        return self.tenant.uuid if self.tenant else None
 
 class Company(Base):
     __tablename__ = "companies"
@@ -35,10 +59,17 @@ class Company(Base):
     email = Column(String(100))
     contact_person = Column(String(100))
     is_active = Column(Boolean, server_default=text('true'), nullable=False)
+    tenant_id = Column(BigInteger, ForeignKey('core.tenants.id'), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     created_by = Column(Integer, ForeignKey('auth.users.id'), nullable=False)
     updated_by = Column(Integer, ForeignKey('auth.users.id'), nullable=True)
+
+    tenant = relationship("Tenant", foreign_keys=[tenant_id], lazy="joined")
+
+    @property
+    def tenant_uuid(self):
+        return self.tenant.uuid if self.tenant else None
 
 class DailyRequestStatus(Base):
     __tablename__ = "daily_request_status"
@@ -64,6 +95,7 @@ class DailyRequest(Base):
     
     # FK a daily_request_status
     status_id = Column(Integer, ForeignKey('business.daily_request_status.id'), nullable=False)
+    tenant_id = Column(BigInteger, ForeignKey('core.tenants.id'), nullable=True)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -83,6 +115,7 @@ class WorkShift(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     request_id = Column(Integer, ForeignKey('business.daily_requests.id'), nullable=False)
+    tenant_id = Column(BigInteger, ForeignKey('core.tenants.id'), nullable=True)
     
     start_time = Column(DateTime(timezone=False), nullable=False)
     end_time = Column(DateTime(timezone=False), nullable=False)
@@ -92,12 +125,12 @@ class WorkShift(Base):
     
     has_discount = Column(Boolean, default=False, nullable=False)
     discount_percentage = Column(Float, default=0.0)
-
+    
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     created_by = Column(Integer, ForeignKey('auth.users.id'), nullable=False)
     updated_by = Column(Integer, ForeignKey('auth.users.id'), nullable=True)
-
+    
     request = relationship("DailyRequest", back_populates="shifts")
     
     assignments = relationship("ShiftAssignment", back_populates="shift", cascade="all, delete-orphan")
@@ -108,6 +141,7 @@ class ShiftAssignment(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     shift_id = Column(Integer, ForeignKey('business.work_shifts.id'), nullable=False)
+    tenant_id = Column(BigInteger, ForeignKey('core.tenants.id'), nullable=True)
     
     # Esta es la llave que nos interesa para la relación principal
     employee_id = Column(Integer, ForeignKey('auth.users.id'), nullable=False)

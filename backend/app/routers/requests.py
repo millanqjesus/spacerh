@@ -12,7 +12,7 @@ router = APIRouter(prefix="/daily-requests", tags=["Solicitudes Diarias"])
 @router.post("/", response_model=DailyRequestResponse, status_code=status.HTTP_201_CREATED)
 def create_daily_request(request: DailyRequestCreate, db: Session = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):
     try:
-        return requests_crud.create_daily_request(db=db, request=request, user_id=current_user.id)
+        return requests_crud.create_daily_request(db=db, request=request, user_id=current_user.id, tenant_id=current_user.tenant_id)
     except ValueError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -34,12 +34,13 @@ def read_daily_requests(
         start_date=start_date,
         end_date=end_date,
         user_id=current_user.id,
-        role=current_user.role
+        role=current_user.role,
+        tenant_id=current_user.tenant_id
     )
 
 @router.get("/{request_id}", response_model=DailyRequestResponse)
 def read_daily_request(request_id: int, db: Session = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):
-    db_request = requests_crud.get_daily_request(db=db, request_id=request_id)
+    db_request = requests_crud.get_daily_request(db=db, request_id=request_id, tenant_id=current_user.tenant_id)
     if db_request is None:
         raise HTTPException(status_code=404, detail="Solicitação não encontrada")
     return db_request
@@ -52,7 +53,7 @@ def assign_employee(
     db: Session = Depends(get_db),
     current_user: UserResponse = Depends(get_current_user)
 ):
-    result = requests_crud.create_assignment(db=db, assignment=assignment, user_id=current_user.id)
+    result = requests_crud.create_assignment(db=db, assignment=assignment, user_id=current_user.id, tenant_id=current_user.tenant_id)
     
     if result == "NOT_FOUND":
         raise HTTPException(status_code=404, detail="Turno não encontrado")
@@ -69,7 +70,7 @@ def remove_assignment(
     db: Session = Depends(get_db),
     current_user: UserResponse = Depends(get_current_user)
 ):
-    success = requests_crud.delete_assignment(db=db, assignment_id=assignment_id)
+    success = requests_crud.delete_assignment(db=db, assignment_id=assignment_id, tenant_id=current_user.tenant_id)
     if not success:
         raise HTTPException(status_code=404, detail="Escalação não encontrada")
     return None
@@ -86,7 +87,8 @@ def update_assignment_status(
         db=db,
         assignment_id=assignment_id,
         status=update_data.status,
-        user_id=current_user.id
+        user_id=current_user.id,
+        tenant_id=current_user.tenant_id
     )
     if not updated_assignment:
         raise HTTPException(status_code=404, detail="Escalação não encontrada")
@@ -108,7 +110,8 @@ def update_request_status(
             db=db, 
             request_id=request_id, 
             status_id=update_data.status_id, 
-            user_id=current_user.id
+            user_id=current_user.id,
+            tenant_id=current_user.tenant_id
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -123,7 +126,7 @@ def delete_request(
     current_user: UserResponse = Depends(get_current_user)
 ):
     """Elimina una solicitud y sus turnos asociados"""
-    success = requests_crud.delete_daily_request(db=db, request_id=request_id)
+    success = requests_crud.delete_daily_request(db=db, request_id=request_id, tenant_id=current_user.tenant_id)
     if not success:
         raise HTTPException(status_code=404, detail="Solicitação não encontrada")
     return None
@@ -146,7 +149,8 @@ def get_payments_report(
         end_date=end_date, 
         company_id=company_id,
         user_id=current_user.id,
-        role=current_user.role
+        role=current_user.role,
+        tenant_id=current_user.tenant_id
     )
 
 @router.get("/report/attendance", response_model=List[AttendanceReportItem])
@@ -166,7 +170,8 @@ def get_attendance_report(
         end_date=end_date, 
         company_id=company_id,
         user_id=current_user.id,
-        role=current_user.role
+        role=current_user.role,
+        tenant_id=current_user.tenant_id
     )
 
 @router.get("/stats/dashboard", response_model=List[DashboardStatsItem])
@@ -186,7 +191,8 @@ def get_dashboard_stats(
         end_date=end_date, 
         company_id=company_id,
         user_id=current_user.id,
-        role=current_user.role
+        role=current_user.role,
+        tenant_id=current_user.tenant_id
     )
 
 @router.get("/stats/attendance", response_model=List[AttendanceStatsItem])
@@ -206,7 +212,8 @@ def get_attendance_stats(
         end_date=end_date, 
         company_id=company_id,
         user_id=current_user.id,
-        role=current_user.role
+        role=current_user.role,
+        tenant_id=current_user.tenant_id
     )
 
 

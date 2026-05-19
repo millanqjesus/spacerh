@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from typing import Optional
 from datetime import datetime
+from uuid import UUID
 
 # Campos base compartidos
 class CompanyBase(BaseModel):
@@ -30,6 +31,7 @@ class CompanyUpdate(BaseModel):
 # Para Responder (GET)
 class CompanyResponse(CompanyBase):
     id: int
+    tenant_uuid: Optional[UUID] = None
     created_at: datetime
     updated_at: datetime
     created_by: int
