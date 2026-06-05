@@ -72,3 +72,7 @@ class Token(BaseModel):
     access_token: str
     token_type: str
     tenant_uuid: Optional[str] = None
+
+class UserTenantChange(BaseModel):
+    user_id: int
+    tenant_id: int

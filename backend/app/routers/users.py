@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 from sqlalchemy.orm import Session
-from app.schemas.schemas import UserResponse, UserUpdate
+from app.schemas.schemas import UserResponse, UserUpdate, UserTenantChange
 from app.db import usersCrud
 from app.dependencies import get_current_user, get_db
 
@@ -42,3 +42,18 @@ def update_user(
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
         
     return updated_user
+
+# --- ENDPOINT ADMIN: Cambiar tenant de un usuario ---
+@router.put("/{user_id}/tenant", response_model=UserResponse)
+def change_user_tenant(
+    user_id: int,
+    body: UserTenantChange,
+    db: Session = Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user)
+):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Apenas administradores podem alterar o tenant")
+    updated = usersCrud.change_user_tenant(db, user_id=user_id, new_tenant_id=body.tenant_id)
+    if updated is None:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    return updated

@@ -95,3 +95,12 @@ def update_user(db: Session, user_id: int, user_update: UserUpdate, tenant_id: i
     db.commit()
     db.refresh(db_user)
     return db_user
+
+def change_user_tenant(db: Session, user_id: int, new_tenant_id: int):
+    db_user = db.query(User).filter(User.id == user_id).first()
+    if not db_user:
+        return None
+    db_user.tenant_id = new_tenant_id
+    db.commit()
+    db.refresh(db_user)
+    return db_user
