@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, text, DateTime, ForeignKey, Date, Float, BigInteger
+from sqlalchemy import Column, Integer, String, Boolean, text, DateTime, ForeignKey, Date, Float, BigInteger, UniqueConstraint
 from sqlalchemy.orm import relationship 
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import UUID
@@ -50,11 +50,14 @@ class User(Base):
 
 class Company(Base):
     __tablename__ = "companies"
-    __table_args__ = {"schema": "business", "extend_existing": True}
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "tax_id", name="uq_company_tenant_tax_id"),
+        {"schema": "business", "extend_existing": True},
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(150), nullable=False, index=True)
-    tax_id = Column(String(20), unique=True, index=True, nullable=False)
+    tax_id = Column(String(20), nullable=False, index=True)
     phone = Column(String(20)) 
     email = Column(String(100))
     contact_person = Column(String(100))

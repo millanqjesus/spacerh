@@ -8,8 +8,11 @@ def get_company(db: Session, company_id: int, tenant_id: int = None):
         query = query.filter(Company.tenant_id == tenant_id)
     return query.first()
 
-def get_company_by_tax_id(db: Session, tax_id: str):
-    return db.query(Company).filter(Company.tax_id == tax_id).first()
+def get_company_by_tax_id(db: Session, tax_id: str, tenant_id: int = None):
+    query = db.query(Company).filter(Company.tax_id == tax_id)
+    if tenant_id:
+        query = query.filter(Company.tenant_id == tenant_id)
+    return query.first()
 
 def get_companies(db: Session, skip: int = 0, limit: int = 100, tenant_id: int = None):
     query = db.query(Company)

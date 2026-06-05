@@ -38,7 +38,7 @@ def create_company(
 ):
     """Crear una nueva empresa"""
     # Validar duplicados por Tax ID
-    db_company = companies_crud.get_company_by_tax_id(db, tax_id=company.tax_id)
+    db_company = companies_crud.get_company_by_tax_id(db, tax_id=company.tax_id, tenant_id=current_user.tenant_id)
     if db_company:
         raise HTTPException(status_code=400, detail="Empresa com este ID Fiscal já existe.")
     
