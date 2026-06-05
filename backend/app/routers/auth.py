@@ -15,32 +15,42 @@ router = APIRouter(prefix="/auth", tags=["Autenticación"])
 
 @router.post("/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def create_user(user: UserCreate, db: Session = Depends(get_db), current_user: UserResponse = Depends(get_current_user)):
-    db_user = usersCrud.get_user_by_email(db, email=user.email)
+    db_user = usersCrud.get_user_by_email(db, email=user.email, tenant_id=current_user.tenant_id)
     if db_user:
-        raise HTTPException(status_code=400, detail="O e-mail já está cadastrado")
+        raise HTTPException(status_code=400, detail="O e-mail já está cadastrado ")
     
-    db_cpf = usersCrud.get_user_by_cpf(db, cpf=user.cpf)
+    db_cpf = usersCrud.get_user_by_cpf(db, cpf=user.cpf, tenant_id=current_user.tenant_id)
     if db_cpf:
-        raise HTTPException(status_code=400, detail="O CPF já está cadastrado")
+        raise HTTPException(status_code=400, detail="O CPF já está cadastrado ")
+
+    if user.code:
+        db_code = usersCrud.get_user_by_code(db, code=user.code, tenant_id=current_user.tenant_id)
+        if db_code:
+            raise HTTPException(status_code=400, detail="O código já está cadastrado ")
 
     return usersCrud.create_user(db=db, user=user, tenant_id=current_user.tenant_id)
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register_user(user: PublicUserCreate, db: Session = Depends(get_db)):
-    db_user = usersCrud.get_user_by_email(db, email=user.email)
-    if db_user:
-        raise HTTPException(status_code=400, detail="O e-mail já está cadastrado")
-    
-    db_cpf = usersCrud.get_user_by_cpf(db, cpf=user.cpf)
-    if db_cpf:
-        raise HTTPException(status_code=400, detail="O CPF já está cadastrado")
-
     tenant_id = None
     if user.tenant_uuid:
         tenant = db.query(Tenant).filter(Tenant.uuid == user.tenant_uuid).first()
         if not tenant:
             raise HTTPException(status_code=404, detail="Tenant não encontrado")
         tenant_id = tenant.id
+
+    db_user = usersCrud.get_user_by_email(db, email=user.email, tenant_id=tenant_id)
+    if db_user:
+        raise HTTPException(status_code=400, detail="O e-mail já está cadastrado ")
+    
+    db_cpf = usersCrud.get_user_by_cpf(db, cpf=user.cpf, tenant_id=tenant_id)
+    if db_cpf:
+        raise HTTPException(status_code=400, detail="O CPF já está cadastrado ")
+
+    if user.code:
+        db_code = usersCrud.get_user_by_code(db, code=user.code, tenant_id=tenant_id)
+        if db_code:
+            raise HTTPException(status_code=400, detail="O código já está cadastrado ")
 
     return usersCrud.create_user(db=db, user=user, tenant_id=tenant_id)
 

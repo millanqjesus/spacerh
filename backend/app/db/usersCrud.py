@@ -5,13 +5,26 @@ from app.schemas.schemas import UserCreate, UserUpdate
 from app.core.security import get_password_hash
 from enum import Enum
 
-def get_user_by_email(db: Session, email: str):
-    """Busca si un email ya existe"""
-    return db.query(User).filter(User.email == email).first()
+def get_user_by_email(db: Session, email: str, tenant_id: int = None):
+    """Busca si un email ya existe (global o por tenant)"""
+    query = db.query(User).filter(User.email == email)
+    if tenant_id:
+        query = query.filter(User.tenant_id == tenant_id)
+    return query.first()
 
-def get_user_by_cpf(db: Session, cpf: str):
-    """Busca si un CPF ya existe"""
-    return db.query(User).filter(User.cpf == cpf).first()
+def get_user_by_cpf(db: Session, cpf: str, tenant_id: int = None):
+    """Busca si un CPF ya existe (global o por tenant)"""
+    query = db.query(User).filter(User.cpf == cpf)
+    if tenant_id:
+        query = query.filter(User.tenant_id == tenant_id)
+    return query.first()
+
+def get_user_by_code(db: Session, code: str, tenant_id: int = None):
+    """Busca si un code ya existe (global o por tenant)"""
+    query = db.query(User).filter(User.code == code)
+    if tenant_id:
+        query = query.filter(User.tenant_id == tenant_id)
+    return query.first()
 
 def get_users(db: Session, skip: int = 0, limit: int = 100, tenant_id: int = None):
     """

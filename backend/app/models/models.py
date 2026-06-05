@@ -23,13 +23,18 @@ class Tenant(Base):
 
 class User(Base):
     __tablename__ = "users"
-    __table_args__ = {"schema": "auth", "extend_existing": True}
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "email", name="uq_user_tenant_email"),
+        UniqueConstraint("tenant_id", "cpf", name="uq_user_tenant_cpf"),
+        UniqueConstraint("tenant_id", "code", name="uq_user_tenant_code"),
+        {"schema": "auth", "extend_existing": True},
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
-    cpf = Column(String(14), unique=True, index=True, nullable=False)
-    email = Column(String, unique=True, index=True, nullable=False)
+    cpf = Column(String(14), index=True, nullable=False)
+    email = Column(String, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, server_default=text('true'), nullable=False)
     role = Column(String(20), server_default='user', nullable=False)
